@@ -1,0 +1,9 @@
+# Nothing built here is committed; the plugin ships as it stands.
+.DS_Store
+Thumbs.db
+node_modules/
+vendor/
+*.log
+*.zip
+.idea/
+.vscode/

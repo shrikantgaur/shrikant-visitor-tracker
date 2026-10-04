@@ -1,0 +1,13 @@
+# Deny direct access to all PHP files in this directory.
+# WordPress serves no public assets from includes/.
+<FilesMatch "\.php$">
+    Order Deny,Allow
+    Deny from all
+</FilesMatch>
+
+# Apache 2.4+
+<IfModule mod_authz_core.c>
+    <FilesMatch "\.php$">
+        Require all denied
+    </FilesMatch>
+</IfModule>

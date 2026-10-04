@@ -1,0 +1,20 @@
+# Everything below stays in the repository and out of the plugin ZIP.
+/.git
+/.github
+/.gitignore
+/.distignore
+/.editorconfig
+/node_modules
+/vendor
+/tests
+/bin
+.DS_Store
+*.log
+*.zip
+README.md
+phpcs.xml
+phpcs.xml.dist
+composer.json
+composer.lock
+package.json
+package-lock.json

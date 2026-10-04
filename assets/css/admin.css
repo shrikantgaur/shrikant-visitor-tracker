@@ -1,0 +1,223 @@
+/**
+ * SK Visitor Tracker — Admin Dashboard Styles
+ * WP-native colour palette, no external font/icon dependencies.
+ */
+
+/* ── Page wrapper ──────────────────────────────────────────────────────────── */
+.sk-vt-dashboard,
+.sk-vt-settings {
+    max-width: 1280px;
+}
+
+/* ── Stat cards row ────────────────────────────────────────────────────────── */
+.sk-vt-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 20px 0 16px;
+}
+
+.sk-vt-stat-card {
+    flex: 1 1 155px;
+    min-width: 140px;
+    text-align: center;
+    padding: 18px 16px;
+}
+
+.sk-vt-stat-card h3 {
+    margin: 0 0 6px;
+    font-size: 11px;
+    color: #646970;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.sk-vt-stat-num {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: #2271b1;
+    line-height: 1.1;
+    margin-bottom: 4px;
+}
+
+.sk-vt-stat-sub {
+    font-size: 12px;
+    color: #787c82;
+}
+
+.sk-vt-online-card .sk-vt-stat-num {
+    color: #00a32a;
+}
+
+/* ── Generic card ──────────────────────────────────────────────────────────── */
+.sk-vt-card {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    border-radius: 3px;
+    padding: 18px 22px;
+    box-shadow: 0 1px 2px rgba(0,0,0,.05);
+    box-sizing: border-box;
+}
+
+.sk-vt-card h2 {
+    margin: 0 0 14px;
+    padding: 0;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+/* ── Grid rows ─────────────────────────────────────────────────────────────── */
+.sk-vt-row {
+    margin-bottom: 14px;
+}
+
+.sk-vt-row-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+}
+
+.sk-vt-row-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+}
+
+@media (max-width: 1100px) {
+    .sk-vt-row-3 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 800px) {
+    .sk-vt-row-2,
+    .sk-vt-row-3 { grid-template-columns: 1fr; }
+    .sk-vt-cards { flex-direction: column; }
+    .sk-vt-stat-card { min-width: 100%; }
+}
+
+/* ── Tables ────────────────────────────────────────────────────────────────── */
+.sk-vt-table {
+    border: none !important;
+    margin: 0 !important;
+}
+
+.sk-vt-table td,
+.sk-vt-table th {
+    padding: 7px 10px !important;
+    font-size: 13px !important;
+    vertical-align: middle !important;
+}
+
+.sk-vt-table th {
+    font-weight: 600 !important;
+    color: #3c434a !important;
+}
+
+.sk-vt-table a {
+    text-decoration: none;
+    color: #2271b1;
+}
+.sk-vt-table a:hover {
+    text-decoration: underline;
+}
+
+.sk-vt-num {
+    text-align: right !important;
+    white-space: nowrap;
+}
+
+.sk-vt-url-preview {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 380px;
+}
+
+/* ── Country % bar ─────────────────────────────────────────────────────────── */
+.sk-vt-bar-wrap {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 16px;
+}
+
+.sk-vt-bar-fill {
+    height: 8px;
+    background: #2271b1;
+    border-radius: 4px;
+    min-width: 2px;
+    transition: width .3s ease;
+    opacity: .7;
+}
+
+.sk-vt-bar-label {
+    font-size: 11px;
+    color: #646970;
+    white-space: nowrap;
+}
+
+/* ── "See all" link in h2 ──────────────────────────────────────────────────── */
+.sk-vt-see-all {
+    font-size: 12px;
+    font-weight: 400;
+    color: #2271b1;
+    text-decoration: none;
+    margin-left: auto;
+}
+.sk-vt-see-all:hover { text-decoration: underline; }
+
+/* ── Period switcher ───────────────────────────────────────────────────────── */
+.sk-vt-period-switcher {
+    display: flex;
+    gap: 6px;
+    margin: 10px 0 0;
+    flex-wrap: wrap;
+}
+
+.sk-vt-period-switcher .button {
+    font-size: 12px;
+    padding: 2px 10px;
+    height: 28px;
+    line-height: 26px;
+}
+
+/* ── Settings page ─────────────────────────────────────────────────────────── */
+.sk-vt-info-box {
+    max-width: 660px;
+    margin-bottom: 20px;
+}
+
+.sk-vt-info-box h2 {
+    margin-top: 0;
+}
+
+.sk-vt-info-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.sk-vt-info-table td {
+    padding: 5px 0;
+    font-size: 13px;
+    border-bottom: 1px solid #f0f0f1;
+}
+
+.sk-vt-info-table td:first-child {
+    color: #646970;
+    width: 55%;
+}
+
+.sk-vt-info-table td:last-child {
+    text-align: right;
+}
+
+.sk-vt-settings .form-table th {
+    width: 200px;
+}

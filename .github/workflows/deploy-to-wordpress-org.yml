@@ -1,0 +1,48 @@
+# Publish a release to the WordPress.org plugin directory.
+#
+# Runs when a tag like v1.0.1 is pushed. The tag is only the trigger: what the
+# directory actually serves is decided by "Stable tag" in readme.txt, so a tag
+# whose number disagrees with that file will appear to do nothing.
+#
+# Needs two repository secrets, from your WordPress.org account:
+#   SVN_USERNAME, SVN_PASSWORD
+#
+# Nothing here runs until the plugin has been approved and its SVN repository
+# exists, so it is safe to have in place beforehand.
+name: Deploy to WordPress.org
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  deploy:
+    name: Publish ${{ github.ref_name }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the tag
+        uses: actions/checkout@v4
+
+      - name: Refuse to ship if the version numbers disagree
+        run: |
+          set -euo pipefail
+
+          tag="${GITHUB_REF_NAME#v}"
+          header=$(grep -m1 -E '^\s*\*\s*Version:' shrikant-visitor-tracker.php | sed -E 's/.*Version:[[:space:]]*//' | tr -d '[:space:]')
+          stable=$(grep -m1 -E '^Stable tag:' readme.txt | sed -E 's/Stable tag:[[:space:]]*//' | tr -d '[:space:]')
+
+          echo "tag=$tag  plugin header=$header  readme stable tag=$stable"
+
+          if [ "$tag" != "$header" ] || [ "$tag" != "$stable" ]; then
+            echo "::error::These three must match. A release where they do not is one that silently serves the wrong version."
+            exit 1
+          fi
+
+      - name: Deploy
+        uses: 10up/action-wordpress-plugin-deploy@stable
+        env:
+          SVN_USERNAME: ${{ secrets.SVN_USERNAME }}
+          SVN_PASSWORD: ${{ secrets.SVN_PASSWORD }}
+          SLUG: shrikant-visitor-tracker

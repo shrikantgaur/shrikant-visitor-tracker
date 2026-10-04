@@ -90,13 +90,6 @@ Yes. Each sub-site gets its own prefixed database tables and settings.
 
 Yes. Run `wp sk-vt stats today`, `wp sk-vt top-pages --limit=20`, `wp sk-vt export --from=2025-01-01 --file=visits.csv`, and more.
 
-== Screenshots ==
-
-1. Dashboard overview with stat cards, 30-day trend chart, and online counter
-2. Hourly distribution bar chart and device/browser doughnut charts
-3. Top pages report with per-page view and unique visitor counts
-4. UTM campaign tracking report
-5. Settings page with GDPR options
 
 == Changelog ==
 

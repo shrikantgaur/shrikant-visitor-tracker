@@ -186,6 +186,8 @@ final class Shrikant_VT_Admin {
             $sources[] = [ 'type' => ucfirst( (string) $type ), 'count' => $count ];
         }
 
+        $daily = $this->stats->daily_series( $days );
+
         wp_localize_script( 'shrikant-vt-admin', 'skVtAdmin', [
             'restUrl'  => esc_url_raw( rest_url( 'sk-vt/v1/' ) ),
             'nonce'    => wp_create_nonce( 'wp_rest' ),
@@ -194,9 +196,16 @@ final class Shrikant_VT_Admin {
             'browsers' => $this->stats->browser_breakdown( $days ),
             'osData'   => $this->stats->os_breakdown( $days ),
             'hourly'   => $this->stats->hourly_today(),
+            'trend'    => [
+                'labels'    => array_column( $daily, 'date' ),
+                'pageviews' => array_map( 'intval', array_column( $daily, 'pageviews' ) ),
+                'unique'    => array_map( 'intval', array_column( $daily, 'unique_visitors' ) ),
+            ],
             'labels'   => [
-                'pageviews' => __( 'Pageviews', 'shrikant-visitor-tracker' ),
-                'unique'    => __( 'Unique Visitors', 'shrikant-visitor-tracker' ),
+                'pageviews'  => __( 'Pageviews', 'shrikant-visitor-tracker' ),
+                'unique'     => __( 'Unique Visitors', 'shrikant-visitor-tracker' ),
+                'empty'      => __( 'Nothing recorded in this window.', 'shrikant-visitor-tracker' ),
+                'emptyToday' => __( 'No visits yet today.', 'shrikant-visitor-tracker' ),
             ],
         ] );
     }
@@ -280,9 +289,11 @@ final class Shrikant_VT_Admin {
                 );
                 return;
             }
+            // Neutral, not green: there is nothing behind this window to have
+            // risen from, and a green pill reads as growth that did not happen.
             printf(
-                '<span class="sk-vt-delta sk-vt-delta--up">%s</span>',
-                esc_html__( 'first period', 'shrikant-visitor-tracker' )
+                '<span class="sk-vt-delta sk-vt-delta--none">%s</span>',
+                esc_html__( 'no earlier data', 'shrikant-visitor-tracker' )
             );
             return;
         }
@@ -479,11 +490,6 @@ final class Shrikant_VT_Admin {
         $alltime   = $this->stats->all_time_totals();
         $top_pages = $this->stats->top_pages( 10, $days );
         $countries = $this->stats->top_countries( 10, $days );
-        $daily     = $this->stats->daily_series( $days );
-
-        $chart_labels = wp_json_encode( array_column( $daily, 'date' ) );
-        $chart_pv     = wp_json_encode( array_column( $daily, 'pageviews' ) );
-        $chart_uv     = wp_json_encode( array_column( $daily, 'unique_visitors' ) );
 
         $period_label = sprintf(
             /* translators: %s: number of days in the reporting period. */
@@ -516,15 +522,7 @@ final class Shrikant_VT_Admin {
                         <h2><?php esc_html_e( 'Traffic trend', 'shrikant-visitor-tracker' ); ?></h2>
                         <span class="sk-vt-card__hint"><?php echo esc_html( $period_label ); ?></span>
                     </div>
-                    <?php if ( empty( $daily ) ) : ?>
-                        <?php $this->empty_state(
-                            'chart-area',
-                            __( 'Nothing recorded yet', 'shrikant-visitor-tracker' ),
-                            __( 'Visits appear here within a minute of the first page view. If the site is brand new, open it in another browser to see the first point land.', 'shrikant-visitor-tracker' )
-                        ); ?>
-                    <?php else : ?>
-                        <div class="sk-vt-chart sk-vt-chart--line"><canvas id="sk-vt-trend-chart"></canvas></div>
-                    <?php endif; ?>
+                    <div class="sk-vt-chart sk-vt-chart--line"><canvas id="sk-vt-trend-chart"></canvas></div>
                 </div>
                 <div class="sk-vt-card">
                     <div class="sk-vt-card__head">
@@ -535,12 +533,19 @@ final class Shrikant_VT_Admin {
                 </div>
             </div>
 
-            <div class="sk-vt-grid sk-vt-grid--3">
+            <div class="sk-vt-grid sk-vt-grid--4">
                 <?php
+                /*
+                 * The four breakdowns sit together because they answer the same
+                 * shape of question. Traffic sources used to sit beside the
+                 * countries table, which is twice as tall, so a third of that
+                 * card was empty whatever the data.
+                 */
                 $breakdowns = [
                     [ 'sk-vt-devices-chart',  __( 'Devices', 'shrikant-visitor-tracker' ) ],
                     [ 'sk-vt-browsers-chart', __( 'Browsers', 'shrikant-visitor-tracker' ) ],
                     [ 'sk-vt-os-chart',       __( 'Operating systems', 'shrikant-visitor-tracker' ) ],
+                    [ 'sk-vt-sources-chart',  __( 'Traffic sources', 'shrikant-visitor-tracker' ) ],
                 ];
                 foreach ( $breakdowns as [ $id, $label ] ) : ?>
                     <div class="sk-vt-card">
@@ -550,14 +555,7 @@ final class Shrikant_VT_Admin {
                 <?php endforeach; ?>
             </div>
 
-            <div class="sk-vt-grid sk-vt-grid--2">
-                <div class="sk-vt-card">
-                    <div class="sk-vt-card__head">
-                        <h2><?php esc_html_e( 'Where visitors came from', 'shrikant-visitor-tracker' ); ?></h2>
-                        <span class="sk-vt-card__hint"><?php echo esc_html( $period_label ); ?></span>
-                    </div>
-                    <div class="sk-vt-chart sk-vt-chart--doughnut"><canvas id="sk-vt-sources-chart"></canvas></div>
-                </div>
+            <div class="sk-vt-grid sk-vt-grid--narrow-left">
                 <div class="sk-vt-card sk-vt-card--flush">
                     <div class="sk-vt-card__head">
                         <h2><?php esc_html_e( 'Top countries', 'shrikant-visitor-tracker' ); ?></h2>
@@ -565,63 +563,19 @@ final class Shrikant_VT_Admin {
                     </div>
                     <?php $this->render_countries_table( $countries ); ?>
                 </div>
-            </div>
 
-            <div class="sk-vt-card sk-vt-card--flush">
-                <div class="sk-vt-card__head">
-                    <h2><?php esc_html_e( 'Top pages', 'shrikant-visitor-tracker' ); ?></h2>
-                    <a href="<?php echo esc_url( add_query_arg( [ 'page' => 'shrikant-visitor-tracker-pages', 'days' => $days ], admin_url( 'admin.php' ) ) ); ?>">
-                        <?php esc_html_e( 'Full pages report', 'shrikant-visitor-tracker' ); ?>
-                    </a>
+                <div class="sk-vt-card sk-vt-card--flush">
+                    <div class="sk-vt-card__head">
+                        <h2><?php esc_html_e( 'Top pages', 'shrikant-visitor-tracker' ); ?></h2>
+                        <a href="<?php echo esc_url( add_query_arg( [ 'page' => 'shrikant-visitor-tracker-pages', 'days' => $days ], admin_url( 'admin.php' ) ) ); ?>">
+                            <?php esc_html_e( 'Full pages report', 'shrikant-visitor-tracker' ); ?>
+                        </a>
+                    </div>
+                    <?php $this->render_pages_table( $top_pages, false ); ?>
                 </div>
-                <?php $this->render_pages_table( $top_pages, false ); ?>
             </div>
         </div>
 
-        <?php if ( ! empty( $daily ) ) : ?>
-        <script>
-        ( function () {
-            var el = document.getElementById( 'sk-vt-trend-chart' );
-            if ( ! el || typeof Chart === 'undefined' ) { return; }
-            new Chart( el, {
-                type: 'line',
-                data: {
-                    labels: <?php echo $chart_labels; // phpcs:ignore WordPress.Security.EscapeOutput -- wp_json_encode output, inserted as a JS literal. ?>,
-                    datasets: [
-                        {
-                            label: '<?php echo esc_js( __( 'Pageviews', 'shrikant-visitor-tracker' ) ); ?>',
-                            data: <?php echo $chart_pv; // phpcs:ignore WordPress.Security.EscapeOutput -- wp_json_encode output, inserted as a JS literal. ?>,
-                            borderColor: '#2271b1',
-                            backgroundColor: 'rgba(34,113,177,0.10)',
-                            borderWidth: 2, fill: true, tension: 0.35,
-                            pointRadius: 0, pointHoverRadius: 4
-                        },
-                        {
-                            label: '<?php echo esc_js( __( 'Unique Visitors', 'shrikant-visitor-tracker' ) ); ?>',
-                            data: <?php echo $chart_uv; // phpcs:ignore WordPress.Security.EscapeOutput -- wp_json_encode output, inserted as a JS literal. ?>,
-                            borderColor: '#d63638',
-                            backgroundColor: 'rgba(214,54,56,0.07)',
-                            borderWidth: 2, fill: true, tension: 0.35,
-                            pointRadius: 0, pointHoverRadius: 4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, usePointStyle: true } }
-                    },
-                    scales: {
-                        y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f0f0f1' } },
-                        x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 18 } }
-                    }
-                }
-            } );
-        } )();
-        </script>
-        <?php endif; ?>
         <?php
     }
 

@@ -54,9 +54,30 @@
 		'#5b9bd5', '#e88fa1', '#52be80', '#f7dc6f',
 	];
 
+	/**
+	 * Replace an empty chart with a sentence. An empty frame reads as a
+	 * broken plugin; "nothing recorded in this window" does not.
+	 */
+	function blank( el, message ) {
+		const wrap = el.parentNode;
+		if ( ! wrap ) {
+			return;
+		}
+		const note = document.createElement( 'div' );
+		note.className = 'sk-vt-chart-empty';
+		note.textContent = message;
+		wrap.replaceChild( note, el );
+	}
+
+	const NOTHING = ( cfg.labels && cfg.labels.empty ) || 'Nothing recorded in this window.';
+
 	function doughnut( canvasId, labels, data ) {
 		const el = document.getElementById( canvasId );
-		if ( ! el || ! labels.length ) {
+		if ( ! el ) {
+			return;
+		}
+		if ( ! labels.length || ! data.some( function ( v ) { return Number( v ) > 0; } ) ) {
+			blank( el, NOTHING );
 			return;
 		}
 		new Chart( el, {
@@ -71,6 +92,7 @@
 			},
 			options: {
 				responsive: true,
+				maintainAspectRatio: false,
 				cutout: '62%',
 				plugins: {
 					legend: {
@@ -84,7 +106,11 @@
 
 	function barChart( canvasId, labels, data, label ) {
 		const el = document.getElementById( canvasId );
-		if ( ! el || ! labels.length ) {
+		if ( ! el ) {
+			return;
+		}
+		if ( ! labels.length || ! data.some( function ( v ) { return Number( v ) > 0; } ) ) {
+			blank( el, ( cfg.labels && cfg.labels.emptyToday ) || NOTHING );
 			return;
 		}
 		new Chart( el, {
@@ -100,6 +126,7 @@
 			},
 			options: {
 				responsive: true,
+				maintainAspectRatio: false,
 				plugins: { legend: { display: false } },
 				scales: {
 					y: { beginAtZero: true, ticks: { precision: 0 } },
@@ -108,8 +135,65 @@
 		} );
 	}
 
+	/**
+	 * The 'traffic over time' line.
+	 *
+	 * This lives here rather than in a <script> beside the canvas because
+	 * Chart.js is enqueued in the footer: a script printed with the markup
+	 * runs before Chart.js exists, so the chart was never drawn at all.
+	 */
+	function trendChart() {
+		const el = document.getElementById( 'sk-vt-trend-chart' );
+		if ( ! el || ! cfg.trend ) {
+			return;
+		}
+		if ( ! cfg.trend.labels || ! cfg.trend.labels.length ) {
+			blank( el, NOTHING );
+			return;
+		}
+
+		new Chart( el, {
+			type: 'line',
+			data: {
+				labels: cfg.trend.labels,
+				datasets: [
+					{
+						label: cfg.labels.pageviews,
+						data: cfg.trend.pageviews,
+						borderColor: '#2271b1',
+						backgroundColor: 'rgba(34,113,177,0.10)',
+						borderWidth: 2, fill: true, tension: 0.35,
+						pointRadius: 0, pointHoverRadius: 4,
+					},
+					{
+						label: cfg.labels.unique,
+						data: cfg.trend.unique,
+						borderColor: '#d63638',
+						backgroundColor: 'rgba(214,54,56,0.07)',
+						borderWidth: 2, fill: true, tension: 0.35,
+						pointRadius: 0, pointHoverRadius: 4,
+					},
+				],
+			},
+			options: {
+				responsive: true,
+				maintainAspectRatio: false,
+				interaction: { mode: 'index', intersect: false },
+				plugins: {
+					legend: { position: 'bottom', labels: { boxWidth: 12, padding: 14, usePointStyle: true } },
+				},
+				scales: {
+					y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: '#f0f0f1' }, border: { display: false } },
+					x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkipPadding: 24 } },
+				},
+			},
+		} );
+	}
+
 	// ── Render charts from inline data ──────────────────────────────────────
 	document.addEventListener( 'DOMContentLoaded', function () {
+
+		trendChart();
 
 		// Device doughnut.
 		if ( cfg.devices ) {

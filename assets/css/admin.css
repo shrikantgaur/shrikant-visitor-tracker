@@ -161,9 +161,11 @@
     margin-bottom: var(--sk-gap);
 }
 
-.sk-vt-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sk-vt-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
 .sk-vt-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.sk-vt-grid--wide-left { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+.sk-vt-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.sk-vt-grid--wide-left   { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+.sk-vt-grid--narrow-left { grid-template-columns: minmax(0, 1fr) minmax(0, 1.75fr); align-items: start; }
 
 /* ── Stat tiles ────────────────────────────────────────────────────────────── */
 .sk-vt-stats {
@@ -229,9 +231,12 @@
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
+    min-height: 22px;
     font-size: 12px;
     color: var(--sk-ink-faint);
 }
+
+.sk-vt-stat__num { margin: 2px 0 4px; }
 
 /* ── Delta pill ────────────────────────────────────────────────────────────── */
 .sk-vt-delta {
@@ -256,6 +261,7 @@
 .sk-vt-delta--up   { color: var(--sk-up);      background: #edfaef; }
 .sk-vt-delta--down { color: var(--sk-down);    background: #fcf0f1; }
 .sk-vt-delta--flat { color: var(--sk-ink-faint); background: var(--sk-surface-alt); }
+.sk-vt-delta--none { color: var(--sk-ink-faint); background: var(--sk-surface-alt); border: 1px dashed var(--sk-line); }
 
 /* ── Live dot ──────────────────────────────────────────────────────────────── */
 .sk-vt-dot {
@@ -276,23 +282,23 @@
 }
 
 /* ── Charts ────────────────────────────────────────────────────────────────── */
+/*
+ * The container carries the height and Chart.js sizes the canvas to fill it,
+ * which is the arrangement Chart.js documents for a responsive chart. Forcing
+ * the canvas to 100% here instead left its bitmap at the size Chart.js had
+ * chosen and stretched that bitmap to fit -- which is why the doughnut
+ * legends came out wide and soft.
+ */
 .sk-vt-chart {
     position: relative;
     width: 100%;
 }
 
-/* Heights live here, not on a height attribute, so the canvas keeps its
-   aspect ratio instead of being squashed at narrow widths. */
-.sk-vt-chart--line     { height: 260px; }
-.sk-vt-chart--bar      { height: 260px; }
-.sk-vt-chart--doughnut { height: 232px; }
+.sk-vt-chart--line     { height: 280px; }
+.sk-vt-chart--bar      { height: 280px; }
+.sk-vt-chart--doughnut { height: 215px; }
 
-.sk-vt-chart canvas {
-    position: absolute;
-    inset: 0;
-    width: 100% !important;
-    height: 100% !important;
-}
+.sk-vt-chart canvas { display: block; }
 
 /* ── Tables ────────────────────────────────────────────────────────────────── */
 .sk-vt-table {
@@ -512,11 +518,14 @@
 .sk-vt-defs tr:last-child th,
 .sk-vt-defs tr:last-child td { border-bottom: 0; }
 
+/* Shrink to the label rather than taking a third of the card: on a wide card
+   a percentage left the value stranded far from the thing it describes. */
 .sk-vt-defs th {
-    width: 34%;
+    width: 1%;
+    white-space: nowrap;
     font-weight: 500;
     color: var(--sk-ink-faint);
-    padding-right: 16px;
+    padding-right: 28px;
 }
 
 .sk-vt-defs td { color: var(--sk-ink); }
@@ -769,16 +778,23 @@
     .sk-vt-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+@media (max-width: 1400px) {
+    .sk-vt-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 1100px) {
     .sk-vt-grid--3,
-    .sk-vt-grid--wide-left { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sk-vt-grid--wide-left,
+    .sk-vt-grid--narrow-left { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 860px) {
     .sk-vt-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .sk-vt-grid--2,
     .sk-vt-grid--3,
-    .sk-vt-grid--wide-left { grid-template-columns: minmax(0, 1fr); }
+    .sk-vt-grid--4,
+    .sk-vt-grid--wide-left,
+    .sk-vt-grid--narrow-left { grid-template-columns: minmax(0, 1fr); }
     .sk-vt-toc { position: static; }
     .sk-vt-head { align-items: flex-start; }
     .sk-vt-title,
@@ -903,4 +919,21 @@
 @media (max-width: 600px) {
     .sk-vt-tablefoot { flex-direction: column; align-items: stretch; }
     .sk-vt-tablenav { justify-content: space-between; }
+}
+
+/* ── A chart with nothing to draw ──────────────────────────────────────────── */
+.sk-vt-chart-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 0 20px;
+    text-align: center;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--sk-ink-faint);
+    background: var(--sk-surface-alt);
+    border: 1px dashed var(--sk-line);
+    border-radius: var(--sk-r-sm);
+    box-sizing: border-box;
 }

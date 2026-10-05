@@ -18,7 +18,7 @@ defined( 'ABSPATH' ) || exit;
  * 2. IP anonymisation — removes last octet (IPv4) or last 80 bits (IPv6)
  *    before any processing; the raw IP is NEVER stored.
  * 3. Consent check — integrates with cookie-consent plugins via a
- *    filter hook (sk_vt_has_consent) so no hard dependency is needed.
+ *    filter hook (shrikant_vt_has_consent) so no hard dependency is needed.
  * 4. GDPR erasure / export hooks — WordPress's personal data tools.
  */
 final class Shrikant_VT_Privacy {
@@ -51,12 +51,12 @@ final class Shrikant_VT_Privacy {
 
         // Gate 4: Consent check — third-party plugins implement this filter.
         /**
-         * Filter: sk_vt_has_consent
+         * Filter: shrikant_vt_has_consent
          * Return FALSE to block tracking (e.g., user hasn't accepted cookies).
          *
          * @param bool $has_consent Defaults to TRUE (tracking allowed).
          */
-        if ( ! (bool) apply_filters( 'sk_vt_has_consent', true ) ) {
+        if ( ! (bool) apply_filters( 'shrikant_vt_has_consent', true ) ) {
             return false;
         }
 

@@ -16,7 +16,7 @@ defined( 'ABSPATH' ) || exit;
  * All settings live in a single WP option (sk_vt_settings) to minimise
  * autoloaded option rows.
  *
- * Extend via the filter sk_vt_default_settings if you need to add options
+ * Extend via the filter shrikant_vt_default_settings if you need to add options
  * without modifying this file.
  */
 final class Shrikant_VT_Settings {
@@ -108,12 +108,12 @@ final class Shrikant_VT_Settings {
      */
     private function defaults(): array {
         /**
-         * Filter: sk_vt_default_settings
+         * Filter: shrikant_vt_default_settings
          * Allows extending default settings without editing this file.
          *
          * @param array<string,mixed> $defaults
          */
-        return (array) apply_filters( 'sk_vt_default_settings', [
+        return (array) apply_filters( 'shrikant_vt_default_settings', [
             'tracking_enabled'  => true,
             'ip_anonymization'  => true,   // Recommended for GDPR.
             'respect_dnt'       => true,

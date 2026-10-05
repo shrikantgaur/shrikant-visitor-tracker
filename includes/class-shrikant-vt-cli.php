@@ -289,10 +289,11 @@ final class Shrikant_VT_CLI {
         $table          = Shrikant_VT_DB::raw_table();
 
         if ( $dry_run ) {
-            // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+            // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder.
             $count = (int) $wpdb->get_var(
                 $wpdb->prepare( "SELECT COUNT(*) FROM {$table} WHERE visit_date < %s", $cutoff )
             );
+            // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
             WP_CLI::log( sprintf(
                 'Dry run: %s rows would be deleted (cutoff: %s, retention: %d days).',
                 number_format( $count ),
@@ -355,7 +356,7 @@ final class Shrikant_VT_CLI {
         $file   = $assoc_args['file']   ?? null;
 
         $table = Shrikant_VT_DB::raw_table();
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder.
         $rows = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT id, visitor_id, page_id, visit_date, visit_hour, visit_time,
@@ -369,6 +370,7 @@ final class Shrikant_VT_CLI {
             ),
             ARRAY_A
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
         if ( empty( $rows ) ) {
             WP_CLI::warning( 'No rows found for the given date range.' );
@@ -411,9 +413,12 @@ final class Shrikant_VT_CLI {
         );
 
         global $wpdb;
-        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder.
         $wpdb->query( 'TRUNCATE TABLE ' . Shrikant_VT_DB::raw_table() );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder.
         $wpdb->query( 'TRUNCATE TABLE ' . Shrikant_VT_DB::sum_table() );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
         // phpcs:enable
         delete_option( 'sk_vt_last_agg_id' );
 

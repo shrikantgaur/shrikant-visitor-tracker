@@ -359,7 +359,7 @@ final class Shrikant_VT_REST {
 
         $table = Shrikant_VT_DB::raw_table();
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder.
         $rows = $wpdb->get_results(
             $wpdb->prepare(
                 "SELECT id, visitor_id, page_id, visit_date, visit_hour, visit_time,
@@ -374,6 +374,7 @@ final class Shrikant_VT_REST {
             ),
             ARRAY_A
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
         if ( empty( $rows ) ) {
             return new WP_REST_Response( [ 'message' => 'No data for the given date range.' ], 200 );

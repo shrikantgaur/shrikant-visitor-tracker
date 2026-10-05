@@ -59,7 +59,7 @@ final class Shrikant_VT_Display {
 		}
 
 		$enabled = (array) apply_filters(
-			'sk_vt_display_post_types',
+			'shrikant_vt_display_post_types',
 			[ 'post' ]
 		);
 
@@ -82,7 +82,7 @@ final class Shrikant_VT_Display {
 		 *
 		 * @param bool $show Whether to show it.
 		 */
-		if ( ! apply_filters( 'sk_vt_show_views', true ) ) {
+		if ( ! apply_filters( 'shrikant_vt_show_views', true ) ) {
 			return $content;
 		}
 
@@ -136,7 +136,7 @@ final class Shrikant_VT_Display {
 
 		$label = $label !== ''
 			? $label
-			: (string) apply_filters( 'sk_vt_views_label', __( 'Views:', 'shrikant-visitor-tracker' ) );
+			: (string) apply_filters( 'shrikant_vt_views_label', __( 'Views:', 'shrikant-visitor-tracker' ) );
 
 		return sprintf(
 			'<p class="sk-vt-views"><span class="sk-vt-views-label">%1$s</span> <span class="sk-vt-views-count">%2$s</span></p>',
@@ -170,6 +170,7 @@ if ( ! function_exists( 'pvc_get_post_views' ) ) {
 	 * @param int|null $post_id Post ID.
 	 * @return int
 	 */
+	// phpcs:ignore WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedFunctionFound -- the name is the point: it stands in for Post Views Counter's own function so a theme that calls it keeps working. Prefixing it would defeat the shim, and it is only declared when that plugin is absent.
 	function pvc_get_post_views( $post_id = null ): int {
 		return shrikant_vt_views( $post_id ? (int) $post_id : null );
 	}

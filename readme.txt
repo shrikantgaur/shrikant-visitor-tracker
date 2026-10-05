@@ -49,17 +49,17 @@ Shrikant Visitor Tracker gives you complete control over your visitor analytics 
 * With IP anonymisation enabled (default), the last IPv4 octet is zeroed before any geo lookup
 * Visitor IDs are HMAC-SHA256 hashes that rotate daily — they cannot be reversed to identify real people
 * DNT header is respected by default
-* Integrates with any cookie consent plugin via the `sk_vt_has_consent` filter
+* Integrates with any cookie consent plugin via the `shrikant_vt_has_consent` filter
 * Compatible with WordPress's built-in personal data export/erasure tools
 
 = Developer Hooks =
 
-* `sk_vt_before_track_visit` — modify or abort tracking
-* `sk_vt_after_insert` — react to new visit rows
-* `sk_vt_has_consent` — integrate cookie consent plugins
-* `sk_vt_is_bot` — override bot detection
-* `sk_vt_get_stats` — filter any stats result
-* `sk_vt_default_settings` — add custom settings
+* `shrikant_vt_before_track_visit` — modify or abort tracking
+* `shrikant_vt_after_insert` — react to new visit rows
+* `shrikant_vt_has_consent` — integrate cookie consent plugins
+* `shrikant_vt_is_bot` — override bot detection
+* `shrikant_vt_get_stats` — filter any stats result
+* `shrikant_vt_default_settings` — add custom settings
 
 == Installation ==
 

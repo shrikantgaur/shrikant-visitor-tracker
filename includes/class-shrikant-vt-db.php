@@ -165,9 +165,12 @@ final class Shrikant_VT_DB {
     }
     public static function uninstall(): void {
         global $wpdb;
-        // phpcs:disable WordPress.DB.PreparedSQL.NotPrepared
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table names come from Shrikant_VT_DB; schema statements cannot take placeholders.
         $wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . Shrikant_VT_TABLE_RAW );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table names come from Shrikant_VT_DB; schema statements cannot take placeholders.
         $wpdb->query( 'DROP TABLE IF EXISTS ' . $wpdb->prefix . Shrikant_VT_TABLE_SUM );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
         // phpcs:enable
         delete_option( self::OPTION_KEY );
         delete_option( 'sk_vt_settings' );

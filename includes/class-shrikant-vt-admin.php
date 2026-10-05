@@ -343,6 +343,7 @@ final class Shrikant_VT_Admin {
     public function render_pages(): void {
         if ( ! current_user_can( 'manage_options' ) ) { return; }
 
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a report filter read straight out of the URL. It selects which range to display and changes nothing, so there is no form submission to tie a nonce to; the value is checked against a fixed list on the next line.
         $days  = isset( $_GET['days'] ) ? absint( wp_unslash( $_GET['days'] ) ) : 30;
         $days  = in_array( $days, [ 7, 14, 30, 90, 365 ], true ) ? $days : 30;
         $pages = $this->stats->top_pages( 50, $days );
@@ -370,6 +371,7 @@ final class Shrikant_VT_Admin {
     public function render_utm(): void {
         if ( ! current_user_can( 'manage_options' ) ) { return; }
 
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a report filter read straight out of the URL. It selects which range to display and changes nothing, so there is no form submission to tie a nonce to; the value is checked against a fixed list on the next line.
         $days   = isset( $_GET['days'] ) ? absint( wp_unslash( $_GET['days'] ) ) : 30;
         $days   = in_array( $days, [ 7, 14, 30, 90, 365 ], true ) ? $days : 30;
         $report = $this->stats->utm_report( 50, $days );
@@ -416,7 +418,8 @@ final class Shrikant_VT_Admin {
         <div class="wrap sk-vt-settings">
             <h1><?php esc_html_e( 'Shrikant Visitor Tracker — Settings', 'shrikant-visitor-tracker' ); ?></h1>
 
-            <?php if ( ! empty( $_GET['updated'] ) ) : ?>
+            <?php // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- just the "saved" flag that handle_form_submit() put in the URL after it had already verified its own nonce.
+            if ( ! empty( $_GET['updated'] ) ) : ?>
             <div class="notice notice-success is-dismissible">
                 <p><?php esc_html_e( 'Settings saved.', 'shrikant-visitor-tracker' ); ?></p>
             </div>
@@ -522,10 +525,10 @@ final class Shrikant_VT_Admin {
         $args   = [ 'page' => 'shrikant-visitor-tracker-import' ];
 
         if ( ! isset( Shrikant_VT_Import::sources()[ $source ] ) || ! Shrikant_VT_Import::available( $source ) ) {
-            $args['sk_vt_error'] = 'missing';
+            $args['shrikant_vt_error'] = 'missing';
         } else {
             $result              = Shrikant_VT_Import::run( $source );
-            $args['sk_vt_posts'] = $result['posts'];
+            $args['shrikant_vt_posts'] = $result['posts'];
             $args['shrikant_vt_views'] = $result['views'];
         }
 
@@ -550,7 +553,8 @@ final class Shrikant_VT_Admin {
         <div class="wrap sk-vt-settings">
             <h1><?php esc_html_e( 'Shrikant Visitor Tracker — Import', 'shrikant-visitor-tracker' ); ?></h1>
 
-            <?php if ( isset( $_GET['shrikant_vt_views'] ) ) : ?>
+            <?php // phpcs:disable WordPress.Security.NonceVerification.Recommended -- the counts handle_import() put in the URL after it had already verified its own nonce. Nothing here acts on them; they are cast to int and printed.
+            if ( isset( $_GET['shrikant_vt_views'] ) ) : ?>
                 <div class="notice notice-success is-dismissible">
                     <p>
                         <?php
@@ -558,16 +562,16 @@ final class Shrikant_VT_Admin {
                             /* translators: 1: number of views, 2: number of posts */
                             esc_html__( 'Imported %1$s views across %2$s posts. You can now delete the plugin they came from.', 'shrikant-visitor-tracker' ),
                             '<strong>' . esc_html( number_format_i18n( (int) $_GET['shrikant_vt_views'] ) ) . '</strong>',
-                            '<strong>' . esc_html( number_format_i18n( (int) $_GET['sk_vt_posts'] ) ) . '</strong>'
+                            '<strong>' . esc_html( number_format_i18n( isset( $_GET['shrikant_vt_posts'] ) ? (int) $_GET['shrikant_vt_posts'] : 0 ) ) . '</strong>'
                         );
                         ?>
                     </p>
                 </div>
-            <?php elseif ( isset( $_GET['sk_vt_error'] ) ) : ?>
+            <?php elseif ( isset( $_GET['shrikant_vt_error'] ) ) : ?>
                 <div class="notice notice-error is-dismissible">
                     <p><?php esc_html_e( 'That plugin has no data on this site, so there was nothing to import.', 'shrikant-visitor-tracker' ); ?></p>
                 </div>
-            <?php endif; ?>
+            <?php endif; // phpcs:enable WordPress.Security.NonceVerification.Recommended ?>
 
             <div class="sk-vt-card sk-vt-info-box">
                 <h2><?php esc_html_e( 'Bringing history across', 'shrikant-visitor-tracker' ); ?></h2>
@@ -689,7 +693,7 @@ final class Shrikant_VT_Admin {
                 </table>
                 <p class="description">
                     <?php esc_html_e( 'To turn the automatic line off, add this to your theme:', 'shrikant-visitor-tracker' ); ?>
-                    <br><code>add_filter( 'sk_vt_show_views', '__return_false' );</code>
+                    <br><code>add_filter( 'shrikant_vt_show_views', '__return_false' );</code>
                 </p>
             </div>
 
@@ -737,7 +741,7 @@ final class Shrikant_VT_Admin {
                 <table class="sk-vt-info-table">
                     <tr><td><?php esc_html_e( 'REST API', 'shrikant-visitor-tracker' ); ?></td><td><code><?php echo esc_html( $rest ); ?></code></td></tr>
                     <tr><td>WP-CLI</td><td><code>wp sk-vt stats today</code>, <code>wp sk-vt top-pages</code>, <code>wp sk-vt import --dry-run</code>, <code>wp sk-vt export</code>, <code>wp sk-vt cleanup --dry-run</code></td></tr>
-                    <tr><td><?php esc_html_e( 'Filters', 'shrikant-visitor-tracker' ); ?></td><td><code>sk_vt_show_views</code>, <code>sk_vt_views_label</code>, <code>sk_vt_display_post_types</code>, <code>sk_vt_default_settings</code></td></tr>
+                    <tr><td><?php esc_html_e( 'Filters', 'shrikant-visitor-tracker' ); ?></td><td><code>shrikant_vt_show_views</code>, <code>shrikant_vt_views_label</code>, <code>shrikant_vt_display_post_types</code>, <code>shrikant_vt_default_settings</code></td></tr>
                 </table>
             </div>
         </div>

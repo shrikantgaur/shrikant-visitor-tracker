@@ -163,19 +163,19 @@ final class Shrikant_VT_Tracker {
         global $wpdb;
 
         /**
-         * Action: sk_vt_before_track_visit
+         * Action: shrikant_vt_before_track_visit
          * Fires before inserting a visit. Hook here to add custom fields
          * or abort tracking by throwing an exception.
          *
          * @param array<string,mixed> $data Visit data array.
          */
-        do_action( 'sk_vt_before_track_visit', $data );
+        do_action( 'shrikant_vt_before_track_visit', $data );
 
         $table = Shrikant_VT_DB::raw_table();
 
         $now = current_time( 'mysql', true ); // UTC datetime.
 
-        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery -- recording a visit is the plugin's purpose; $wpdb->insert places every value itself.
         $wpdb->insert(
             $table,
             [
@@ -201,6 +201,7 @@ final class Shrikant_VT_Tracker {
             ],
             [ '%s','%s','%d','%s','%d','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%d','%s' ]
         );
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery
 
         $insert_id = $wpdb->insert_id;
 
@@ -208,13 +209,13 @@ final class Shrikant_VT_Tracker {
         $this->online->record( $data['visitor_id'] );
 
         /**
-         * Action: sk_vt_after_insert
+         * Action: shrikant_vt_after_insert
          * Fires immediately after a visit row is inserted.
          *
          * @param int                 $insert_id  New row ID (0 on failure).
          * @param array<string,mixed> $data       Visit data.
          */
-        do_action( 'sk_vt_after_insert', $insert_id, $data );
+        do_action( 'shrikant_vt_after_insert', $insert_id, $data );
     }
 
     // ── Data collection ───────────────────────────────────────────────────────
@@ -393,9 +394,11 @@ final class Shrikant_VT_Tracker {
         $params = [ 'utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term' ];
         $utm    = [];
         foreach ( $params as $param ) {
+            // phpcs:disable WordPress.Security.NonceVerification.Recommended -- this reads the campaign tags off an ordinary page view by an anonymous visitor. There is no form and no state change, so there is no nonce to check; the values are sanitised and only ever stored.
             $utm[ $param ] = isset( $_GET[ $param ] )
                 ? sanitize_text_field( wp_unslash( $_GET[ $param ] ) )
                 : '';
+            // phpcs:enable WordPress.Security.NonceVerification.Recommended
         }
         return $utm;
     }

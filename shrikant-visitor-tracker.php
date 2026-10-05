@@ -215,12 +215,12 @@ final class Shrikant_Visitor_Tracker {
         }
 
         /**
-         * Action: sk_vt_loaded
+         * Action: shrikant_vt_loaded
          * Fires after all Shrikant Visitor Tracker services are initialised.
          *
          * @param Shrikant_Visitor_Tracker $plugin The main plugin instance.
          */
-        do_action( 'sk_vt_loaded', $this );
+        do_action( 'shrikant_vt_loaded', $this );
     }
 
     /**

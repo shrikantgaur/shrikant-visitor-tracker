@@ -106,13 +106,13 @@ final class Shrikant_VT_Bot_Filter {
         }
 
         /**
-         * Filter: sk_vt_is_bot
+         * Filter: shrikant_vt_is_bot
          * Allow third-party code to override bot detection result.
          *
          * @param bool   $is_bot  Current detection result.
          * @param string $ua      Lowercased User-Agent string.
          */
-        return (bool) apply_filters( 'sk_vt_is_bot', false, $ua );
+        return (bool) apply_filters( 'shrikant_vt_is_bot', false, $ua );
     }
 
     /**

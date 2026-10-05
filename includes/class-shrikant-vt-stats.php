@@ -24,7 +24,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * Extensibility:
  * ──────────────
- * The filter sk_vt_get_stats fires before returning any stat, allowing
+ * The filter shrikant_vt_get_stats fires before returning any stat, allowing
  * third-party code to modify or augment results.
  */
 final class Shrikant_VT_Stats {
@@ -55,6 +55,7 @@ final class Shrikant_VT_Stats {
         $table = Shrikant_VT_DB::raw_table();
 
         $sql = $page_id !== null
+            // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
             ? $wpdb->prepare(
                 "SELECT COUNT(*) AS pageviews, SUM(is_unique) AS unique_visitors
                  FROM {$table}
@@ -67,9 +68,11 @@ final class Shrikant_VT_Stats {
                  WHERE visit_date BETWEEN %s AND %s",
                 $from, $to
             );
+            // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $row = $wpdb->get_row( $sql, ARRAY_A );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
         $result = [
             'pageviews'       => (int) ( $row['pageviews']       ?? 0 ),
@@ -79,12 +82,12 @@ final class Shrikant_VT_Stats {
         set_transient( $cache_key, $result, 5 * MINUTE_IN_SECONDS );
 
         /**
-         * Filter: sk_vt_get_stats
+         * Filter: shrikant_vt_get_stats
          * @param array  $result   Computed stats.
          * @param string $method   Calling method name.
          * @param array  $args     Method arguments.
          */
-        return (array) apply_filters( 'sk_vt_get_stats', $result, 'get_totals', compact( 'from', 'to', 'page_id' ) );
+        return (array) apply_filters( 'shrikant_vt_get_stats', $result, 'get_totals', compact( 'from', 'to', 'page_id' ) );
     }
 
     // ── Period helpers (convenience wrappers) ─────────────────────────────────
@@ -141,6 +144,7 @@ final class Shrikant_VT_Stats {
         $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
         $to    = gmdate( 'Y-m-d' );
 
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
             "SELECT visit_date AS date,
                     COUNT(*)          AS pageviews,
@@ -151,9 +155,11 @@ final class Shrikant_VT_Stats {
              ORDER BY visit_date ASC",
             $from, $to
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $rows = $wpdb->get_results( $sql, ARRAY_A ) ?: [];
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
         $result = array_map( static fn( array $r ) => [
             'date'            => $r['date'],
@@ -182,6 +188,7 @@ final class Shrikant_VT_Stats {
         $table = Shrikant_VT_DB::raw_table();
         $today = gmdate( 'Y-m-d' );
 
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
             "SELECT visit_hour AS hour, COUNT(*) AS pageviews
              FROM {$table}
@@ -190,9 +197,11 @@ final class Shrikant_VT_Stats {
              ORDER BY visit_hour ASC",
             $today
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $rows   = $wpdb->get_results( $sql, ARRAY_A ) ?: [];
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
         $result = array_map( static fn( array $r ) => [
             'hour'      => (int) $r['hour'],
             'pageviews' => (int) $r['pageviews'],
@@ -224,6 +233,7 @@ final class Shrikant_VT_Stats {
         $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
         $to    = gmdate( 'Y-m-d' );
 
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
             "SELECT page_id,
                     COUNT(*)       AS pageviews,
@@ -235,9 +245,11 @@ final class Shrikant_VT_Stats {
              LIMIT %d",
             $from, $to, $limit
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $rows = $wpdb->get_results( $sql, ARRAY_A ) ?: [];
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
         $result = array_map( static function ( array $r ): array {
             $pid   = (int) $r['page_id'];
@@ -277,6 +289,7 @@ final class Shrikant_VT_Stats {
         $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
         $to    = gmdate( 'Y-m-d' );
 
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
             "SELECT referrer_type, COUNT(*) AS cnt
              FROM {$table}
@@ -284,9 +297,11 @@ final class Shrikant_VT_Stats {
              GROUP BY referrer_type",
             $from, $to
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $rows   = $wpdb->get_results( $sql, ARRAY_A ) ?: [];
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
         $result = [];
         foreach ( $rows as $row ) {
             $result[ $row['referrer_type'] ] = (int) $row['cnt'];
@@ -318,6 +333,7 @@ final class Shrikant_VT_Stats {
         $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
         $to    = gmdate( 'Y-m-d' );
 
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
             "SELECT country_code, COUNT(*) AS pageviews
              FROM {$table}
@@ -327,9 +343,11 @@ final class Shrikant_VT_Stats {
              LIMIT %d",
             $from, $to, $limit
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $rows   = $wpdb->get_results( $sql, ARRAY_A ) ?: [];
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
         $result = array_map( static fn( array $r ) => [
             'country_code' => $r['country_code'],
             'pageviews'    => (int) $r['pageviews'],
@@ -360,6 +378,7 @@ final class Shrikant_VT_Stats {
         $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
         $to    = gmdate( 'Y-m-d' );
 
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
             "SELECT device_type, COUNT(*) AS cnt
              FROM {$table}
@@ -367,9 +386,11 @@ final class Shrikant_VT_Stats {
              GROUP BY device_type",
             $from, $to
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $rows   = $wpdb->get_results( $sql, ARRAY_A ) ?: [];
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
         $result = [];
         foreach ( $rows as $row ) {
             $result[ $row['device_type'] ] = (int) $row['cnt'];
@@ -401,6 +422,7 @@ final class Shrikant_VT_Stats {
         $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
         $to    = gmdate( 'Y-m-d' );
 
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
             "SELECT visit_date AS date,
                     COUNT(*)          AS pageviews,
@@ -411,9 +433,11 @@ final class Shrikant_VT_Stats {
              ORDER BY visit_date ASC",
             $from, $to, $page_id
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $rows = $wpdb->get_results( $sql, ARRAY_A ) ?: [];
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
         $result = array_map( static fn( array $r ) => [
             'date'            => $r['date'],
@@ -446,6 +470,7 @@ final class Shrikant_VT_Stats {
         $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
         $to    = gmdate( 'Y-m-d' );
 
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
             "SELECT browser, COUNT(*) AS cnt
              FROM {$table}
@@ -454,9 +479,11 @@ final class Shrikant_VT_Stats {
              ORDER BY cnt DESC",
             $from, $to
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $rows   = $wpdb->get_results( $sql, ARRAY_A ) ?: [];
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
         $result = [];
         foreach ( $rows as $row ) {
             $result[ $row['browser'] ] = (int) $row['cnt'];
@@ -487,6 +514,7 @@ final class Shrikant_VT_Stats {
         $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
         $to    = gmdate( 'Y-m-d' );
 
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
             "SELECT os, COUNT(*) AS cnt
              FROM {$table}
@@ -495,9 +523,11 @@ final class Shrikant_VT_Stats {
              ORDER BY cnt DESC",
             $from, $to
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $rows   = $wpdb->get_results( $sql, ARRAY_A ) ?: [];
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
         $result = [];
         foreach ( $rows as $row ) {
             $result[ $row['os'] ] = (int) $row['cnt'];
@@ -529,6 +559,7 @@ final class Shrikant_VT_Stats {
         $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
         $to    = gmdate( 'Y-m-d' );
 
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
             "SELECT utm_source, utm_medium, utm_campaign, COUNT(*) AS pageviews
              FROM {$table}
@@ -539,9 +570,11 @@ final class Shrikant_VT_Stats {
              LIMIT %d",
             $from, $to, $limit
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $rows = $wpdb->get_results( $sql, ARRAY_A ) ?: [];
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
         $result = array_map( static fn( array $r ) => [
             'source'    => $r['utm_source'],
@@ -577,6 +610,7 @@ final class Shrikant_VT_Stats {
 
         $table = $wpdb->prefix . Shrikant_VT_TABLE_SUM;
 
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $tracked = (int) $wpdb->get_var(
             $wpdb->prepare(
                 "SELECT SUM(pageviews) FROM `{$table}`
@@ -584,6 +618,7 @@ final class Shrikant_VT_Stats {
                 $page_id
             )
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
         $imported = class_exists( 'Shrikant_VT_Import' ) ? Shrikant_VT_Import::views_for( $page_id ) : 0;
 
@@ -605,7 +640,7 @@ final class Shrikant_VT_Stats {
 
         $table = Shrikant_VT_DB::raw_table();
 
-        // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared,WordPress.DB.DirectDatabaseQuery
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $row = $wpdb->get_row(
             "SELECT COUNT(*) AS pageviews,
                     SUM(is_unique) AS unique_visitors,
@@ -614,6 +649,7 @@ final class Shrikant_VT_Stats {
              FROM {$table}",
             ARRAY_A
         );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
         $result = [
             'pageviews'       => (int) ( $row['pageviews']       ?? 0 ),

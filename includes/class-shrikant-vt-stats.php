@@ -93,6 +93,37 @@ final class Shrikant_VT_Stats {
     // ── Period helpers (convenience wrappers) ─────────────────────────────────
 
     /** Stats for today. */
+    /**
+     * The dates a report should cover.
+     *
+     * Without a window this is the old behaviour -- N days back from today.
+     * With one it is exactly the two dates given, which is what lets a report
+     * cover a period that does not end today.
+     *
+     * @param int                     $days   Days back, when no window is given.
+     * @param array<string,string>|null $window from/to as Y-m-d.
+     * @return array{0:string,1:string}
+     */
+    private function resolve_window( int $days, ?array $window ): array {
+        if ( is_array( $window ) && ! empty( $window['from'] ) && ! empty( $window['to'] ) ) {
+            return [ (string) $window['from'], (string) $window['to'] ];
+        }
+
+        return [ gmdate( 'Y-m-d', strtotime( "-{$days} days" ) ), gmdate( 'Y-m-d' ) ];
+    }
+
+    /**
+     * Part of a cache key identifying the window.
+     *
+     * A cached report keyed only on the number of days would hand one custom
+     * range's figures to another, since both are "custom".
+     */
+    private function window_key( int $days, ?array $window ): string {
+        [ $from, $to ] = $this->resolve_window( $days, $window );
+
+        return $from . '_' . $to;
+    }
+
     public function today(): array {
         $today = gmdate( 'Y-m-d' );
         return $this->get_totals( $today, $today );
@@ -131,18 +162,17 @@ final class Shrikant_VT_Stats {
      * @param int $days Number of days to look back.
      * @return array<int,array{date:string,pageviews:int,unique_visitors:int}>
      */
-    public function daily_series( int $days = 30 ): array {
+    public function daily_series( int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = 'sk_vt_daily_series_' . $days;
+        $cache_key = 'sk_vt_daily_series_' . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
         }
 
         $table = Shrikant_VT_DB::raw_table();
-        $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
-        $to    = gmdate( 'Y-m-d' );
+        [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
@@ -220,18 +250,17 @@ final class Shrikant_VT_Stats {
      * @param int $days   Look-back window.
      * @return array<int,array{page_id:int,title:string,url:string,pageviews:int,unique_visitors:int}>
      */
-    public function top_pages( int $limit = 10, int $days = 30 ): array {
+    public function top_pages( int $limit = 10, int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = "sk_vt_top_pages_{$limit}_{$days}";
+        $cache_key = "sk_vt_top_pages_{$limit}_" . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
         }
 
         $table = Shrikant_VT_DB::raw_table();
-        $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
-        $to    = gmdate( 'Y-m-d' );
+        [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
@@ -276,18 +305,17 @@ final class Shrikant_VT_Stats {
      * @param int $days Look-back window.
      * @return array<string,int> e.g. ['direct'=>100,'search'=>50,...]
      */
-    public function traffic_sources( int $days = 30 ): array {
+    public function traffic_sources( int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = "sk_vt_sources_{$days}";
+        $cache_key = 'sk_vt_sources_' . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
         }
 
         $table = Shrikant_VT_DB::raw_table();
-        $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
-        $to    = gmdate( 'Y-m-d' );
+        [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
@@ -320,18 +348,17 @@ final class Shrikant_VT_Stats {
      * @param int $days  Look-back window.
      * @return array<int,array{country_code:string,pageviews:int}>
      */
-    public function top_countries( int $limit = 10, int $days = 30 ): array {
+    public function top_countries( int $limit = 10, int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = "sk_vt_countries_{$limit}_{$days}";
+        $cache_key = "sk_vt_countries_{$limit}_" . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
         }
 
         $table = Shrikant_VT_DB::raw_table();
-        $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
-        $to    = gmdate( 'Y-m-d' );
+        [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
@@ -365,18 +392,17 @@ final class Shrikant_VT_Stats {
      * @param int $days Look-back window.
      * @return array<string,int> e.g. ['desktop'=>200,'mobile'=>150,'tablet'=>30]
      */
-    public function device_breakdown( int $days = 30 ): array {
+    public function device_breakdown( int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = "sk_vt_devices_{$days}";
+        $cache_key = 'sk_vt_devices_' . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
         }
 
         $table = Shrikant_VT_DB::raw_table();
-        $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
-        $to    = gmdate( 'Y-m-d' );
+        [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
@@ -409,18 +435,17 @@ final class Shrikant_VT_Stats {
      * @param int $page_id WordPress post/page ID.
      * @return array<int,array{date:string,pageviews:int,unique_visitors:int}>
      */
-    public function daily_series_for_page( int $days, int $page_id ): array {
+    public function daily_series_for_page( int $days, int $page_id, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = "sk_vt_series_{$days}_{$page_id}";
+        $cache_key = "sk_vt_series_{$page_id}_" . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
         }
 
         $table = Shrikant_VT_DB::raw_table();
-        $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
-        $to    = gmdate( 'Y-m-d' );
+        [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
@@ -457,18 +482,17 @@ final class Shrikant_VT_Stats {
      * @param int $days Look-back window.
      * @return array<string,int> e.g. ['Chrome'=>150,'Firefox'=>40,...]
      */
-    public function browser_breakdown( int $days = 30 ): array {
+    public function browser_breakdown( int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = "sk_vt_browsers_{$days}";
+        $cache_key = 'sk_vt_browsers_' . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
         }
 
         $table = Shrikant_VT_DB::raw_table();
-        $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
-        $to    = gmdate( 'Y-m-d' );
+        [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
@@ -501,18 +525,17 @@ final class Shrikant_VT_Stats {
      * @param int $days Look-back window.
      * @return array<string,int>
      */
-    public function os_breakdown( int $days = 30 ): array {
+    public function os_breakdown( int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = "sk_vt_os_{$days}";
+        $cache_key = 'sk_vt_os_' . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
         }
 
         $table = Shrikant_VT_DB::raw_table();
-        $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
-        $to    = gmdate( 'Y-m-d' );
+        [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
@@ -546,18 +569,17 @@ final class Shrikant_VT_Stats {
      * @param int $days  Look-back window.
      * @return array<int,array{source:string,medium:string,campaign:string,pageviews:int}>
      */
-    public function utm_report( int $limit = 20, int $days = 30 ): array {
+    public function utm_report( int $limit = 20, int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = "sk_vt_utm_{$limit}_{$days}";
+        $cache_key = "sk_vt_utm_{$limit}_" . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
         }
 
         $table = Shrikant_VT_DB::raw_table();
-        $from  = gmdate( 'Y-m-d', strtotime( "-{$days} days" ) );
-        $to    = gmdate( 'Y-m-d' );
+        [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(

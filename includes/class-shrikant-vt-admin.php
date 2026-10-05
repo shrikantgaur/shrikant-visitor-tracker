@@ -174,27 +174,29 @@ final class Shrikant_VT_Admin {
 
         // The period control drives the charts too, so the data localised here
         // has to come from the same window the page is about to render.
-        $days = $this->selected_days();
+        $window = $this->selected_window();
+        $days   = $window['days'];
+        $args   = $this->window_args( $window );
 
         $devices = [];
-        foreach ( $this->stats->device_breakdown( $days ) as $type => $count ) {
+        foreach ( $this->stats->device_breakdown( $days, $args ) as $type => $count ) {
             $devices[] = [ 'device' => ucfirst( (string) $type ), 'count' => $count ];
         }
 
         $sources = [];
-        foreach ( $this->stats->traffic_sources( $days ) as $type => $count ) {
+        foreach ( $this->stats->traffic_sources( $days, $args ) as $type => $count ) {
             $sources[] = [ 'type' => ucfirst( (string) $type ), 'count' => $count ];
         }
 
-        $daily = $this->stats->daily_series( $days );
+        $daily = $this->stats->daily_series( $days, $args );
 
         wp_localize_script( 'shrikant-vt-admin', 'skVtAdmin', [
             'restUrl'  => esc_url_raw( rest_url( 'sk-vt/v1/' ) ),
             'nonce'    => wp_create_nonce( 'wp_rest' ),
             'devices'  => $devices,
             'sources'  => $sources,
-            'browsers' => $this->stats->browser_breakdown( $days ),
-            'osData'   => $this->stats->os_breakdown( $days ),
+            'browsers' => $this->stats->browser_breakdown( $days, $args ),
+            'osData'   => $this->stats->os_breakdown( $days, $args ),
             'hourly'   => $this->stats->hourly_today(),
             'trend'    => [
                 'labels'    => array_column( $daily, 'date' ),
@@ -211,14 +213,91 @@ final class Shrikant_VT_Admin {
     }
 
     /**
-     * The reporting window, read from the URL and checked against the list the
-     * segmented control offers.
+     * The reporting window.
+     *
+     * Either one of the preset periods, or an explicit pair of dates when both
+     * are given and usable. A custom range is the only way to look at a period
+     * that does not end today, which is what the presets cannot express.
+     *
+     * @return array{custom:bool,days:int,from:string,to:string,label:string}
      */
-    private function selected_days(): int {
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- a report filter read out of the URL. It picks which window to display and changes nothing, so there is no form submission to tie a nonce to, and it is only accepted if it appears in self::PERIODS.
-        $days = isset( $_GET['days'] ) ? absint( wp_unslash( $_GET['days'] ) ) : 30;
+    private function selected_window(): array {
+        $today = gmdate( 'Y-m-d' );
 
-        return in_array( $days, self::PERIODS, true ) ? $days : 30;
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended -- the dates for a read-only report, read out of the URL. They change nothing, so there is no form submission to tie a nonce to; each is accepted only if it is a real calendar date in Y-m-d.
+        $from = isset( $_GET['from'] ) ? $this->as_date( sanitize_text_field( wp_unslash( $_GET['from'] ) ) ) : '';
+        $to   = isset( $_GET['to'] ) ? $this->as_date( sanitize_text_field( wp_unslash( $_GET['to'] ) ) ) : '';
+        $days = isset( $_GET['days'] ) ? absint( wp_unslash( $_GET['days'] ) ) : 30;
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+        if ( '' !== $from && '' !== $to ) {
+            // Back to front is a slip, not a reason to show an empty report.
+            if ( $from > $to ) {
+                [ $from, $to ] = [ $to, $from ];
+            }
+
+            // Nothing has been recorded tomorrow, so do not offer to look.
+            if ( $to > $today ) {
+                $to = $today;
+            }
+            if ( $from > $today ) {
+                $from = $today;
+            }
+
+            $span = (int) ( ( strtotime( $to ) - strtotime( $from ) ) / DAY_IN_SECONDS ) + 1;
+
+            return [
+                'custom' => true,
+                'days'   => max( 1, $span ),
+                'from'   => $from,
+                'to'     => $to,
+                'label'  => sprintf(
+                    /* translators: 1: start date, 2: end date. */
+                    __( '%1$s to %2$s', 'shrikant-visitor-tracker' ),
+                    $from,
+                    $to
+                ),
+            ];
+        }
+
+        $days = in_array( $days, self::PERIODS, true ) ? $days : 30;
+
+        return [
+            'custom' => false,
+            'days'   => $days,
+            'from'   => gmdate( 'Y-m-d', strtotime( "-{$days} days" ) ),
+            'to'     => $today,
+            'label'  => sprintf(
+                /* translators: %s: number of days in the reporting period. */
+                _n( 'Last %s day', 'Last %s days', $days, 'shrikant-visitor-tracker' ),
+                number_format_i18n( $days )
+            ),
+        ];
+    }
+
+    /**
+     * A date, if the string really is one.
+     *
+     * Checked by round-tripping through DateTimeImmutable rather than by
+     * pattern alone, so 2026-02-31 is rejected instead of silently becoming
+     * the third of March.
+     */
+    private function as_date( string $value ): string {
+        $date = DateTimeImmutable::createFromFormat( '!Y-m-d', $value );
+
+        return ( $date && $date->format( 'Y-m-d' ) === $value ) ? $value : '';
+    }
+
+    /** What a report passes to the stats class. */
+    private function window_args( array $window ): array {
+        return [ 'from' => $window['from'], 'to' => $window['to'] ];
+    }
+
+    /** Query args that carry the chosen window from one link to the next. */
+    private function window_query( array $window ): array {
+        return $window['custom']
+            ? [ 'from' => $window['from'], 'to' => $window['to'] ]
+            : [ 'days' => $window['days'] ];
     }
 
     // ── Shared UI parts ───────────────────────────────────────────────────────
@@ -248,7 +327,7 @@ final class Shrikant_VT_Admin {
      * primary-button colour, so a screen reader is told which one is active
      * and not just shown it.
      */
-    private function period_control( string $page_slug, int $current, array $keep = [] ): void {
+    private function period_control( string $page_slug, array $window, array $keep = [] ): void {
         $labels = [
             7   => __( '7 days', 'shrikant-visitor-tracker' ),
             14  => __( '14 days', 'shrikant-visitor-tracker' ),
@@ -256,17 +335,62 @@ final class Shrikant_VT_Admin {
             90  => __( '90 days', 'shrikant-visitor-tracker' ),
             365 => __( '1 year', 'shrikant-visitor-tracker' ),
         ];
+
+        $today = gmdate( 'Y-m-d' );
         ?>
-        <div class="sk-vt-seg" role="group" aria-label="<?php esc_attr_e( 'Reporting period', 'shrikant-visitor-tracker' ); ?>">
-            <?php foreach ( self::PERIODS as $d ) :
-                $args = array_merge( $keep, [ 'page' => $page_slug, 'days' => $d ] );
-                $url  = add_query_arg( $args, admin_url( 'admin.php' ) );
-                ?>
-                <a href="<?php echo esc_url( $url ); ?>"
-                   <?php echo $current === $d ? 'aria-current="true"' : ''; ?>>
-                    <?php echo esc_html( $labels[ $d ] ); ?>
-                </a>
-            <?php endforeach; ?>
+        <div class="sk-vt-period">
+            <div class="sk-vt-seg" role="group" aria-label="<?php esc_attr_e( 'Reporting period', 'shrikant-visitor-tracker' ); ?>">
+                <?php foreach ( self::PERIODS as $d ) :
+                    $args = array_merge( $keep, [ 'page' => $page_slug, 'days' => $d ] );
+                    unset( $args['from'], $args['to'], $args['paged'] );
+                    $url = add_query_arg( $args, admin_url( 'admin.php' ) );
+                    ?>
+                    <a href="<?php echo esc_url( $url ); ?>"
+                       <?php echo ( ! $window['custom'] && $window['days'] === $d ) ? 'aria-current="true"' : ''; ?>>
+                        <?php echo esc_html( $labels[ $d ] ); ?>
+                    </a>
+                <?php endforeach; ?>
+            </div>
+
+            <?php
+            /*
+             * A plain GET form, so the chosen range ends up in the URL like
+             * every other filter here and the page can be bookmarked, shared
+             * or reloaded without the dates being lost.
+             */
+            ?>
+            <form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>"
+                  class="sk-vt-dates<?php echo $window['custom'] ? ' is-active' : ''; ?>">
+                <input type="hidden" name="page" value="<?php echo esc_attr( $page_slug ); ?>">
+                <?php foreach ( $keep as $key => $value ) :
+                    if ( in_array( $key, [ 'page', 'days', 'from', 'to', 'paged' ], true ) ) {
+                        continue;
+                    }
+                    ?>
+                    <input type="hidden" name="<?php echo esc_attr( (string) $key ); ?>" value="<?php echo esc_attr( (string) $value ); ?>">
+                <?php endforeach; ?>
+
+                <label for="sk-vt-from-<?php echo esc_attr( $page_slug ); ?>"><?php esc_html_e( 'From', 'shrikant-visitor-tracker' ); ?></label>
+                <input type="date" id="sk-vt-from-<?php echo esc_attr( $page_slug ); ?>" name="from"
+                       max="<?php echo esc_attr( $today ); ?>"
+                       value="<?php echo esc_attr( $window['custom'] ? $window['from'] : '' ); ?>">
+
+                <label for="sk-vt-to-<?php echo esc_attr( $page_slug ); ?>"><?php esc_html_e( 'to', 'shrikant-visitor-tracker' ); ?></label>
+                <input type="date" id="sk-vt-to-<?php echo esc_attr( $page_slug ); ?>" name="to"
+                       max="<?php echo esc_attr( $today ); ?>"
+                       value="<?php echo esc_attr( $window['custom'] ? $window['to'] : '' ); ?>">
+
+                <button type="submit" class="button"><?php esc_html_e( 'Apply', 'shrikant-visitor-tracker' ); ?></button>
+
+                <?php if ( $window['custom'] ) :
+                    $clear = array_merge( $keep, [ 'page' => $page_slug, 'days' => 30 ] );
+                    unset( $clear['from'], $clear['to'], $clear['paged'] );
+                    ?>
+                    <a class="sk-vt-dates__clear" href="<?php echo esc_url( add_query_arg( $clear, admin_url( 'admin.php' ) ) ); ?>">
+                        <?php esc_html_e( 'Clear', 'shrikant-visitor-tracker' ); ?>
+                    </a>
+                <?php endif; ?>
+            </form>
         </div>
         <?php
     }
@@ -470,11 +594,8 @@ final class Shrikant_VT_Admin {
     }
 
     /** Link to the CSV export for a window. */
-    private function export_url( int $days ): string {
-        return rest_url(
-            'sk-vt/v1/export?from=' . gmdate( 'Y-m-d', strtotime( "-{$days} days" ) )
-            . '&to=' . gmdate( 'Y-m-d' )
-        );
+    private function export_url( array $window ): string {
+        return rest_url( 'sk-vt/v1/export?from=' . rawurlencode( $window['from'] ) . '&to=' . rawurlencode( $window['to'] ) );
     }
 
     // ── Dashboard ─────────────────────────────────────────────────────────────
@@ -484,28 +605,26 @@ final class Shrikant_VT_Admin {
             return;
         }
 
-        $days = $this->selected_days();
+        $window = $this->selected_window();
+        $days   = $window['days'];
+        $args   = $this->window_args( $window );
 
         $online    = $this->online->get_count();
         $alltime   = $this->stats->all_time_totals();
-        $top_pages = $this->stats->top_pages( 10, $days );
-        $countries = $this->stats->top_countries( 10, $days );
+        $top_pages = $this->stats->top_pages( 10, $days, $args );
+        $countries = $this->stats->top_countries( 10, $days, $args );
 
-        $period_label = sprintf(
-            /* translators: %s: number of days in the reporting period. */
-            _n( 'Last %s day', 'Last %s days', $days, 'shrikant-visitor-tracker' ),
-            number_format_i18n( $days )
-        );
+        $period_label = $window['label'];
         ?>
         <div class="wrap sk-vt">
             <?php
             $this->head(
                 __( 'Visitor Analytics', 'shrikant-visitor-tracker' ),
                 __( 'Counted in the reader\'s browser, so pages served from a cache are counted too. Known bots are filtered out before anything is recorded.', 'shrikant-visitor-tracker' ),
-                function () use ( $days ) {
-                    $this->period_control( 'shrikant-visitor-tracker', $days );
+                function () use ( $window ) {
+                    $this->period_control( 'shrikant-visitor-tracker', $window );
                     ?>
-                    <a href="<?php echo esc_url( $this->export_url( $days ) ); ?>" class="button" download>
+                    <a href="<?php echo esc_url( $this->export_url( $window ) ); ?>" class="button" download>
                         <span class="dashicons dashicons-download" aria-hidden="true"></span>
                         <?php esc_html_e( 'Export CSV', 'shrikant-visitor-tracker' ); ?>
                     </a>
@@ -567,7 +686,7 @@ final class Shrikant_VT_Admin {
                 <div class="sk-vt-card sk-vt-card--flush">
                     <div class="sk-vt-card__head">
                         <h2><?php esc_html_e( 'Top pages', 'shrikant-visitor-tracker' ); ?></h2>
-                        <a href="<?php echo esc_url( add_query_arg( [ 'page' => 'shrikant-visitor-tracker-pages', 'days' => $days ], admin_url( 'admin.php' ) ) ); ?>">
+                        <a href="<?php echo esc_url( add_query_arg( array_merge( [ 'page' => 'shrikant-visitor-tracker-pages' ], $this->window_query( $window ) ), admin_url( 'admin.php' ) ) ); ?>">
                             <?php esc_html_e( 'Full pages report', 'shrikant-visitor-tracker' ); ?>
                         </a>
                     </div>
@@ -858,8 +977,9 @@ final class Shrikant_VT_Admin {
             return;
         }
 
-        $days  = $this->selected_days();
-        $pages = $this->stats->top_pages( self::REPORT_LIMIT, $days );
+        $window = $this->selected_window();
+        $days   = $window['days'];
+        $pages  = $this->stats->top_pages( self::REPORT_LIMIT, $days, $this->window_args( $window ) );
 
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- the search term and sort order for a read-only report, read out of the URL. They change nothing, so there is no form submission to tie a nonce to; the term is sanitised and the sort key is checked against a fixed list.
         $search  = isset( $_GET['s'] ) ? sanitize_text_field( wp_unslash( $_GET['s'] ) ) : '';
@@ -894,7 +1014,7 @@ final class Shrikant_VT_Admin {
             }
         );
 
-        $keep = [ 'page' => 'shrikant-visitor-tracker-pages', 'days' => $days ];
+        $keep = array_merge( [ 'page' => 'shrikant-visitor-tracker-pages' ], $this->window_query( $window ) );
         if ( '' !== $search ) {
             $keep['s'] = $search;
         }
@@ -928,10 +1048,10 @@ final class Shrikant_VT_Admin {
             $this->head(
                 __( 'Pages Report', 'shrikant-visitor-tracker' ),
                 __( 'The busiest pages in the window. Click a column heading to reorder, or search to narrow the list.', 'shrikant-visitor-tracker' ),
-                function () use ( $days ) {
-                    $this->period_control( 'shrikant-visitor-tracker-pages', $days );
+                function () use ( $window, $keep ) {
+                    $this->period_control( 'shrikant-visitor-tracker-pages', $window, $keep );
                     ?>
-                    <a href="<?php echo esc_url( $this->export_url( $days ) ); ?>" class="button" download>
+                    <a href="<?php echo esc_url( $this->export_url( $window ) ); ?>" class="button" download>
                         <span class="dashicons dashicons-download" aria-hidden="true"></span>
                         <?php esc_html_e( 'Export CSV', 'shrikant-visitor-tracker' ); ?>
                     </a>
@@ -961,7 +1081,16 @@ final class Shrikant_VT_Admin {
 
                     <form method="get" action="<?php echo esc_url( admin_url( 'admin.php' ) ); ?>" class="sk-vt-search">
                         <input type="hidden" name="page" value="shrikant-visitor-tracker-pages">
-                        <input type="hidden" name="days" value="<?php echo esc_attr( (string) $days ); ?>">
+                        <?php
+                        /*
+                         * The window goes through as whatever it is -- a preset
+                         * or a pair of dates. Emitting $days here instead sent
+                         * the span of a custom range as a preset, so searching
+                         * inside a range quietly moved you to a different one.
+                         */
+                        foreach ( $this->window_query( $window ) as $key => $value ) : ?>
+                            <input type="hidden" name="<?php echo esc_attr( (string) $key ); ?>" value="<?php echo esc_attr( (string) $value ); ?>">
+                        <?php endforeach; ?>
                         <input type="hidden" name="orderby" value="<?php echo esc_attr( $orderby ); ?>">
                         <input type="hidden" name="order" value="<?php echo esc_attr( $order ); ?>">
                         <input type="hidden" name="per_page" value="<?php echo esc_attr( (string) $per_page ); ?>">
@@ -970,7 +1099,7 @@ final class Shrikant_VT_Admin {
                                placeholder="<?php esc_attr_e( 'Search title or URL…', 'shrikant-visitor-tracker' ); ?>">
                         <button type="submit" class="button"><?php esc_html_e( 'Search', 'shrikant-visitor-tracker' ); ?></button>
                         <?php if ( '' !== $search ) : ?>
-                            <a class="button-link" href="<?php echo esc_url( add_query_arg( [ 'page' => 'shrikant-visitor-tracker-pages', 'days' => $days, 'per_page' => $per_page ], admin_url( 'admin.php' ) ) ); ?>">
+                            <a class="button-link" href="<?php echo esc_url( add_query_arg( array_merge( [ 'page' => 'shrikant-visitor-tracker-pages' ], $this->window_query( $window ), [ 'per_page' => $per_page ] ), admin_url( 'admin.php' ) ) ); ?>">
                                 <?php esc_html_e( 'Clear', 'shrikant-visitor-tracker' ); ?>
                             </a>
                         <?php endif; ?>
@@ -997,16 +1126,17 @@ final class Shrikant_VT_Admin {
             return;
         }
 
-        $days   = $this->selected_days();
-        $report = $this->stats->utm_report( self::REPORT_LIMIT, $days );
+        $window = $this->selected_window();
+        $days   = $window['days'];
+        $report = $this->stats->utm_report( self::REPORT_LIMIT, $days, $this->window_args( $window ) );
         $total  = array_sum( array_column( $report, 'pageviews' ) );
         $top    = $report ? max( array_column( $report, 'pageviews' ) ) : 0;
 
-        $keep = [
-            'page'     => 'shrikant-visitor-tracker-utm',
-            'days'     => $days,
-            'per_page' => $this->per_page(),
-        ];
+        $keep = array_merge(
+            [ 'page' => 'shrikant-visitor-tracker-utm' ],
+            $this->window_query( $window ),
+            [ 'per_page' => $this->per_page() ]
+        );
 
         $per_page  = $this->per_page();
         $rows      = count( $report );
@@ -1020,8 +1150,8 @@ final class Shrikant_VT_Admin {
             $this->head(
                 __( 'UTM Campaigns', 'shrikant-visitor-tracker' ),
                 __( 'Campaign tags are picked up automatically from the page URL, so a link you tagged elsewhere shows up here without any setup.', 'shrikant-visitor-tracker' ),
-                function () use ( $days ) {
-                    $this->period_control( 'shrikant-visitor-tracker-utm', $days );
+                function () use ( $window, $keep ) {
+                    $this->period_control( 'shrikant-visitor-tracker-utm', $window, $keep );
                 }
             );
             ?>

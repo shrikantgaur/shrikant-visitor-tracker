@@ -1101,3 +1101,66 @@
 @media (prefers-reduced-motion: reduce) {
     .sk-vt-details > summary::before { transition: none; }
 }
+
+/* ── Period: presets plus an explicit range ────────────────────────────────── */
+.sk-vt-period {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.sk-vt-dates {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 4px 3px 10px;
+    background: var(--sk-surface-alt);
+    border: 1px solid var(--sk-line);
+    border-radius: var(--sk-r);
+    font-size: 12px;
+    color: var(--sk-ink-faint);
+}
+
+/* When a range is in force, say so without relying on the inputs alone. */
+.sk-vt-dates.is-active {
+    background: var(--sk-brand-soft);
+    border-color: #a7c8e8;
+    color: var(--sk-brand);
+}
+
+.sk-vt-dates label {
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.sk-vt-dates input[type="date"] {
+    height: 28px;
+    min-height: 28px;
+    padding: 0 6px;
+    font-size: 12px;
+    line-height: 26px;
+    border-radius: var(--sk-r-sm);
+    box-shadow: none;
+    color: var(--sk-ink);
+}
+
+.sk-vt-dates .button {
+    height: 28px;
+    line-height: 26px;
+    padding: 0 10px;
+    font-size: 12px;
+}
+
+.sk-vt-dates__clear {
+    padding: 0 6px;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.sk-vt-dates__clear:hover { text-decoration: underline; }
+
+@media (max-width: 782px) {
+    .sk-vt-dates { width: 100%; flex-wrap: wrap; }
+    .sk-vt-dates input[type="date"] { flex: 1; min-width: 130px; }
+}

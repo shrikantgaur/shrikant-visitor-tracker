@@ -11,7 +11,6 @@
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain:       shrikant-visitor-tracker
- * Domain Path:       /languages
  *
  * @package Shrikant_Visitor_Tracker
  *
@@ -154,13 +153,6 @@ final class Shrikant_Visitor_Tracker {
      * Called once on plugins_loaded priority 5.
      */
     public function init(): void {
-        // Load translations.
-        load_plugin_textdomain(
-            'shrikant-visitor-tracker',
-            false,
-            dirname( plugin_basename( Shrikant_VT_FILE ) ) . '/languages'
-        );
-
         // Instantiate and register core services.
         $this->services['settings'] = new Shrikant_VT_Settings();
         $this->services['db']       = new Shrikant_VT_DB();

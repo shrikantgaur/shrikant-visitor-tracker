@@ -33,6 +33,32 @@ final class Shrikant_VT_Display {
 	public function register_hooks(): void {
 		add_shortcode( 'sk_views', [ $this, 'shortcode' ] );
 		add_filter( 'the_content', [ $this, 'maybe_append' ], 20 );
+		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_styles' ] );
+	}
+
+	/**
+	 * The few rules the count needs, printed inline.
+	 *
+	 * Registered against no file, so this adds a handful of bytes to the page
+	 * and no request. It exists because of one rule the icon cannot win any
+	 * other way: Tailwind's Preflight, which a great many themes ship, resets
+	 * svg to display:block. That drops the icon onto its own line above the
+	 * text. The obvious fix -- display:inline-block in the element's style
+	 * attribute -- does not survive wp_kses, which strips display from inline
+	 * styles, so it has to be a rule in a stylesheet.
+	 *
+	 * A class beats Preflight's bare `svg` on specificity, so none of this
+	 * needs !important.
+	 */
+	public function enqueue_styles(): void {
+		wp_register_style( 'shrikant-vt-views', false, [], Shrikant_VT_VERSION );
+		wp_enqueue_style( 'shrikant-vt-views' );
+		wp_add_inline_style(
+			'shrikant-vt-views',
+			'.sk-vt-views-icon{display:inline-block;width:1em;height:1em;vertical-align:-.125em;margin-right:.35em;flex:none}'
+			. '.sk-vt-views{display:flex;align-items:center;gap:0;flex-wrap:wrap}'
+			. '.sk-vt-views-label{margin-right:.3em}'
+		);
 	}
 
 	/**

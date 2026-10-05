@@ -150,9 +150,65 @@ final class Shrikant_VT_Display {
 			: (string) apply_filters( 'shrikant_vt_views_label', __( 'Views:', 'shrikant-visitor-tracker' ) );
 
 		return sprintf(
-			'<p class="sk-vt-views"><span class="sk-vt-views-label">%1$s</span> <span class="sk-vt-views-count">%2$s</span></p>',
+			'<p class="sk-vt-views">%1$s<span class="sk-vt-views-label">%2$s</span> <span class="sk-vt-views-count">%3$s</span></p>',
+			$this->icon( $post_id ),
 			esc_html( $label ),
 			esc_html( number_format_i18n( $views ) )
+		);
+	}
+
+	/**
+	 * The small eye before the count.
+	 *
+	 * Inline rather than an icon font or an image, because this plugin loads
+	 * no stylesheet on the front end at all and should not start loading one
+	 * for a single glyph. It is drawn in currentColor and sized in em, so it
+	 * takes the colour and size of whatever text the theme puts it in.
+	 *
+	 * Hidden from screen readers: the label beside it already says "Views",
+	 * and an icon that repeats the label is noise to anyone listening.
+	 *
+	 * @param int $post_id Post being rendered.
+	 * @return string Markup, or an empty string when switched off.
+	 */
+	private function icon( int $post_id ): string {
+		$default = '<svg class="sk-vt-views-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"'
+			. ' width="1em" height="1em" fill="none" stroke="currentColor" stroke-width="2"'
+			. ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"'
+			. ' style="vertical-align:-0.125em;margin-right:0.35em">'
+			. '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7Z"></path>'
+			. '<circle cx="12" cy="12" r="3"></circle>'
+			. '</svg>';
+
+		/**
+		 * Filter: shrikant_vt_views_icon
+		 *
+		 * Return your own markup, or an empty string for no icon at all.
+		 *
+		 * @param string $svg     Default inline SVG.
+		 * @param int    $post_id Post being rendered.
+		 */
+		$icon = (string) apply_filters( 'shrikant_vt_views_icon', $default, $post_id );
+
+		if ( '' === trim( $icon ) ) {
+			return '';
+		}
+
+		// The filter can return anything, so what gets printed is limited to
+		// the handful of SVG tags and attributes an icon actually needs.
+		return wp_kses(
+			$icon,
+			[
+				'svg'    => [
+					'class' => true, 'xmlns' => true, 'viewbox' => true, 'width' => true, 'height' => true,
+					'fill' => true, 'stroke' => true, 'stroke-width' => true, 'stroke-linecap' => true,
+					'stroke-linejoin' => true, 'aria-hidden' => true, 'focusable' => true, 'role' => true,
+					'style' => true,
+				],
+				'path'   => [ 'd' => true, 'fill' => true, 'stroke' => true, 'stroke-width' => true, 'stroke-linecap' => true, 'stroke-linejoin' => true ],
+				'circle' => [ 'cx' => true, 'cy' => true, 'r' => true, 'fill' => true, 'stroke' => true, 'stroke-width' => true ],
+				'g'      => [ 'fill' => true, 'stroke' => true ],
+			]
 		);
 	}
 }

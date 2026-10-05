@@ -635,15 +635,13 @@
 
 .sk-vt-opt {
     display: grid;
-    grid-template-columns: 24px minmax(0, 1fr);
-    gap: 2px 10px;
-    padding: 13px 0;
+    grid-template-columns: 38px minmax(0, 1fr);
+    gap: 2px 12px;
+    padding: 14px 0;
     border-top: 1px solid var(--sk-line-soft);
 }
 
 .sk-vt-opt:first-of-type { border-top: 0; padding-top: 2px; }
-
-.sk-vt-opt input[type="checkbox"] { margin: 2px 0 0; }
 
 /*
  * The clickable label is the name only. The explanation sits outside it on
@@ -679,9 +677,9 @@
     background: #fcf0f1;
     border: 1px solid #f3c7c8;
     border-radius: var(--sk-r-sm);
-    padding: 13px 14px;
-    margin-top: 14px;
-    grid-template-columns: 24px minmax(0, 1fr);
+    padding: 14px;
+    margin-top: 2px;
+    grid-template-columns: 38px minmax(0, 1fr);
 }
 
 .sk-vt-opt--danger .sk-vt-opt__name { color: #8a2424; }
@@ -971,8 +969,8 @@
 /* ── Checkbox grid (post types) ────────────────────────────────────────────── */
 .sk-vt-checks {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-    gap: 2px 14px;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 2px 10px;
     margin-top: 2px;
 }
 
@@ -991,7 +989,6 @@
 .sk-vt-check span { color: var(--sk-ink); }
 
 .sk-vt-check code {
-    margin-left: auto;
     font-size: 11px;
     color: var(--sk-ink-faint);
     background: var(--sk-surface-alt);
@@ -1163,4 +1160,119 @@
 @media (max-width: 782px) {
     .sk-vt-dates { width: 100%; flex-wrap: wrap; }
     .sk-vt-dates input[type="date"] { flex: 1; min-width: 130px; }
+}
+
+/* ── Switch ────────────────────────────────────────────────────────────────── */
+.sk-vt-switch {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 20px;
+    margin-top: 1px;
+    flex: none;
+}
+
+/*
+ * The real checkbox is still here and still focusable; it is only made
+ * invisible. Hiding it with display:none would take it out of the tab order
+ * and off the accessibility tree along with it.
+ */
+.sk-vt-switch input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.sk-vt-switch__track {
+    position: absolute;
+    inset: 0;
+    background: #c3c4c7;
+    border-radius: 999px;
+    transition: background .15s ease;
+    pointer-events: none;
+}
+
+.sk-vt-switch__track::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .25);
+    transition: transform .15s ease;
+}
+
+.sk-vt-switch input:checked + .sk-vt-switch__track { background: var(--sk-brand); }
+.sk-vt-switch input:checked + .sk-vt-switch__track::after { transform: translateX(14px); }
+.sk-vt-switch input:hover + .sk-vt-switch__track { background: #a7aaad; }
+.sk-vt-switch input:checked:hover + .sk-vt-switch__track { background: #135e96; }
+
+.sk-vt-switch input:focus-visible + .sk-vt-switch__track {
+    outline: 2px solid var(--sk-brand);
+    outline-offset: 2px;
+}
+
+.sk-vt-opt--danger .sk-vt-switch input:checked + .sk-vt-switch__track { background: var(--sk-danger); }
+.sk-vt-opt--danger .sk-vt-switch input:focus-visible + .sk-vt-switch__track { outline-color: var(--sk-danger); }
+
+@media (prefers-reduced-motion: reduce) {
+    .sk-vt-switch__track,
+    .sk-vt-switch__track::after { transition: none; }
+}
+
+/* ── Settings layout ───────────────────────────────────────────────────────── */
+.sk-vt-settings-form { min-width: 0; }
+
+.sk-vt-settings-form .sk-vt-fieldset {
+    margin-bottom: var(--sk-gap);
+    padding: 18px 20px;
+}
+
+.sk-vt-settings-form legend {
+    float: left;
+    width: 100%;
+    margin-bottom: 2px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.sk-vt-settings-form .sk-vt-fieldset__sub { clear: both; }
+
+.sk-vt-side { min-width: 0; }
+
+@media (min-width: 1101px) {
+    .sk-vt-side { position: sticky; top: 46px; align-self: start; }
+}
+
+/* ── Save bar ──────────────────────────────────────────────────────────────── */
+.sk-vt-savebar {
+    position: sticky;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding: 14px 20px;
+    background: var(--sk-surface);
+    border: 1px solid var(--sk-line);
+    border-radius: var(--sk-r);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, .06);
+}
+
+.sk-vt-savebar__note {
+    font-size: 12px;
+    color: var(--sk-ink-faint);
+}
+
+@media (max-width: 600px) {
+    .sk-vt-savebar { padding: 12px 14px; }
+    .sk-vt-savebar__note { flex-basis: 100%; }
 }

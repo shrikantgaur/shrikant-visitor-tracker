@@ -1270,11 +1270,11 @@ final class Shrikant_VT_Admin {
             <?php endif; ?>
 
             <div class="sk-vt-grid sk-vt-grid--wide-left">
-                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="sk-vt-card">
+                <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="sk-vt-settings-form">
                     <input type="hidden" name="action" value="sk_vt_save_settings">
                     <?php wp_nonce_field( 'sk_vt_settings_save', 'sk_vt_nonce' ); ?>
 
-                    <fieldset class="sk-vt-fieldset">
+                    <fieldset class="sk-vt-card sk-vt-fieldset">
                         <legend><?php esc_html_e( 'Tracking', 'shrikant-visitor-tracker' ); ?></legend>
                         <p class="sk-vt-fieldset__sub"><?php esc_html_e( 'Whether visits are recorded at all, and how the request is made.', 'shrikant-visitor-tracker' ); ?></p>
                         <?php
@@ -1299,7 +1299,7 @@ final class Shrikant_VT_Admin {
                         ?>
                     </fieldset>
 
-                    <fieldset class="sk-vt-fieldset">
+                    <fieldset class="sk-vt-card sk-vt-fieldset">
                         <legend><?php esc_html_e( 'Show the count to readers', 'shrikant-visitor-tracker' ); ?></legend>
                         <p class="sk-vt-fieldset__sub"><?php esc_html_e( 'Adds a line like "Views: 1,234" at the end of the content. This is only about what visitors see — tracking carries on either way.', 'shrikant-visitor-tracker' ); ?></p>
                         <?php
@@ -1333,7 +1333,7 @@ final class Shrikant_VT_Admin {
                         </div>
                     </fieldset>
 
-                    <fieldset class="sk-vt-fieldset">
+                    <fieldset class="sk-vt-card sk-vt-fieldset">
                         <legend><?php esc_html_e( 'Privacy', 'shrikant-visitor-tracker' ); ?></legend>
                         <p class="sk-vt-fieldset__sub"><?php esc_html_e( 'The raw IP address is never written to the database. These control what happens before that.', 'shrikant-visitor-tracker' ); ?></p>
                         <?php
@@ -1358,7 +1358,7 @@ final class Shrikant_VT_Admin {
                         ?>
                     </fieldset>
 
-                    <fieldset class="sk-vt-fieldset">
+                    <fieldset class="sk-vt-card sk-vt-fieldset">
                         <legend><?php esc_html_e( 'Data', 'shrikant-visitor-tracker' ); ?></legend>
                         <p class="sk-vt-fieldset__sub"><?php esc_html_e( 'Individual visits are rolled up into hourly summaries every hour. The summaries are what the reports read, and they are never deleted.', 'shrikant-visitor-tracker' ); ?></p>
 
@@ -1403,7 +1403,7 @@ final class Shrikant_VT_Admin {
                         </div>
                     </fieldset>
 
-                    <fieldset class="sk-vt-fieldset">
+                    <fieldset class="sk-vt-card sk-vt-fieldset">
                         <legend><?php esc_html_e( 'On deleting the plugin', 'shrikant-visitor-tracker' ); ?></legend>
                         <?php
                         $this->option(
@@ -1416,12 +1416,13 @@ final class Shrikant_VT_Admin {
                         ?>
                     </fieldset>
 
-                    <p class="sk-vt-submit">
+                    <div class="sk-vt-savebar">
                         <button type="submit" class="button button-primary"><?php esc_html_e( 'Save settings', 'shrikant-visitor-tracker' ); ?></button>
-                    </p>
+                        <span class="sk-vt-savebar__note"><?php esc_html_e( 'Changes apply to new visits. Nothing already recorded is altered.', 'shrikant-visitor-tracker' ); ?></span>
+                    </div>
                 </form>
 
-                <div>
+                <aside class="sk-vt-side">
                     <div class="sk-vt-card" style="margin-bottom:16px">
                         <div class="sk-vt-card__head"><h2><?php esc_html_e( 'What is stored', 'shrikant-visitor-tracker' ); ?></h2></div>
                         <table class="sk-vt-defs">
@@ -1469,7 +1470,7 @@ final class Shrikant_VT_Admin {
                             <p><?php esc_html_e( 'Both need an administrator login. Nothing about your visitors is readable without one.', 'shrikant-visitor-tracker' ); ?></p>
                         </div>
                     </div>
-                </div>
+                </aside>
             </div>
         </div>
         <?php
@@ -1487,8 +1488,19 @@ final class Shrikant_VT_Admin {
         $id = 'sk-vt-opt-' . $name;
         ?>
         <div class="sk-vt-opt<?php echo $danger ? ' sk-vt-opt--danger' : ''; ?>">
-            <input type="checkbox" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="1"
-                   <?php checked( $checked ); ?> aria-describedby="<?php echo esc_attr( $id . '-desc' ); ?>">
+            <?php
+            /*
+             * A switch is only paint. The control underneath is still an
+             * ordinary checkbox with the same name, so it keeps its place in
+             * the tab order, its label, and whatever a screen reader makes of
+             * a checkbox -- none of which a div dressed as a toggle would.
+             */
+            ?>
+            <span class="sk-vt-switch">
+                <input type="checkbox" id="<?php echo esc_attr( $id ); ?>" name="<?php echo esc_attr( $name ); ?>" value="1"
+                       <?php checked( $checked ); ?> aria-describedby="<?php echo esc_attr( $id . '-desc' ); ?>">
+                <span class="sk-vt-switch__track" aria-hidden="true"></span>
+            </span>
             <label class="sk-vt-opt__name" for="<?php echo esc_attr( $id ); ?>"><?php echo esc_html( $label ); ?></label>
             <p class="sk-vt-opt__desc" id="<?php echo esc_attr( $id . '-desc' ); ?>"><?php echo esc_html( $desc ); ?></p>
         </div>

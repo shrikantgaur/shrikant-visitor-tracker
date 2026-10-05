@@ -1,223 +1,906 @@
 /**
- * SK Visitor Tracker — Admin Dashboard Styles
- * WP-native colour palette, no external font/icon dependencies.
+ * Shrikant Visitor Tracker — admin styles.
+ *
+ * Built to sit inside wp-admin rather than on top of it: the palette, the
+ * type scale and the control shapes are WordPress's own, so these screens
+ * read as part of the admin and not as a plugin that brought its own theme.
+ *
+ * No webfont and no icon font are loaded. Icons are Dashicons, which ship
+ * with WordPress, and flags are derived from the country code in CSS-free
+ * PHP, so these screens cost one stylesheet and nothing else.
  */
 
-/* ── Page wrapper ──────────────────────────────────────────────────────────── */
-.sk-vt-dashboard,
-.sk-vt-settings {
-    max-width: 1280px;
+/* ── Tokens ────────────────────────────────────────────────────────────────── */
+.sk-vt {
+    --sk-bg:          #f0f0f1;
+    --sk-surface:     #fff;
+    --sk-surface-alt: #f6f7f7;
+    --sk-line:        #dcdcde;
+    --sk-line-soft:   #f0f0f1;
+    --sk-ink:         #1d2327;
+    --sk-ink-soft:    #50575e;
+    --sk-ink-faint:   #787c82;
+    --sk-brand:       #2271b1;
+    --sk-brand-soft:  #f0f6fc;
+    --sk-up:          #007017;
+    --sk-down:        #b32d2e;
+    --sk-warn:        #996800;
+    --sk-danger:      #d63638;
+
+    --sk-r:    6px;
+    --sk-r-sm: 4px;
+    --sk-gap:  16px;
+
+    --sk-shadow:    0 1px 2px rgba(0, 0, 0, .05);
+    --sk-shadow-up: 0 2px 6px rgba(0, 0, 0, .08);
+
+    max-width: 1440px;
+    color: var(--sk-ink);
 }
 
-/* ── Stat cards row ────────────────────────────────────────────────────────── */
-.sk-vt-cards {
+/* ── Page header ───────────────────────────────────────────────────────────── */
+.sk-vt-head {
     display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
     flex-wrap: wrap;
-    gap: 14px;
-    margin: 20px 0 16px;
+    gap: 12px;
+    margin: 0 0 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--sk-line);
 }
 
-.sk-vt-stat-card {
-    flex: 1 1 155px;
-    min-width: 140px;
-    text-align: center;
-    padding: 18px 16px;
-}
+.sk-vt-head__text { min-width: 0; }
 
-.sk-vt-stat-card h3 {
-    margin: 0 0 6px;
-    font-size: 11px;
-    color: #646970;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: .06em;
-}
-
-.sk-vt-stat-num {
-    font-size: 2.2rem;
-    font-weight: 700;
-    color: #2271b1;
-    line-height: 1.1;
-    margin-bottom: 4px;
-}
-
-.sk-vt-stat-sub {
-    font-size: 12px;
-    color: #787c82;
-}
-
-.sk-vt-online-card .sk-vt-stat-num {
-    color: #00a32a;
-}
-
-/* ── Generic card ──────────────────────────────────────────────────────────── */
-.sk-vt-card {
-    background: #fff;
-    border: 1px solid #c3c4c7;
-    border-radius: 3px;
-    padding: 18px 22px;
-    box-shadow: 0 1px 2px rgba(0,0,0,.05);
-    box-sizing: border-box;
-}
-
-.sk-vt-card h2 {
-    margin: 0 0 14px;
+.sk-vt .sk-vt-head h1 {
+    margin: 0;
     padding: 0;
-    font-size: 14px;
+    font-size: 1.45rem;
     font-weight: 600;
-    border: none;
+    line-height: 1.3;
+}
+
+.sk-vt-head__sub {
+    margin: 4px 0 0;
+    font-size: 13px;
+    color: var(--sk-ink-faint);
+    max-width: 68ch;
+}
+
+.sk-vt-head__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ── Segmented period control ──────────────────────────────────────────────── */
+.sk-vt-seg {
+    display: inline-flex;
+    background: var(--sk-surface-alt);
+    border: 1px solid var(--sk-line);
+    border-radius: var(--sk-r);
+    padding: 2px;
+    gap: 2px;
+}
+
+.sk-vt-seg a {
+    display: block;
+    padding: 4px 11px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 20px;
+    color: var(--sk-ink-soft);
+    text-decoration: none;
+    border-radius: var(--sk-r-sm);
+    white-space: nowrap;
+}
+
+.sk-vt-seg a:hover,
+.sk-vt-seg a:focus {
+    background: rgba(0, 0, 0, .04);
+    color: var(--sk-ink);
+}
+
+.sk-vt-seg a[aria-current="true"] {
+    background: var(--sk-surface);
+    color: var(--sk-brand);
+    font-weight: 600;
+    box-shadow: var(--sk-shadow);
+}
+
+.sk-vt-seg a:focus-visible {
+    outline: 2px solid var(--sk-brand);
+    outline-offset: -1px;
+}
+
+/* ── Cards ─────────────────────────────────────────────────────────────────── */
+.sk-vt-card {
+    background: var(--sk-surface);
+    border: 1px solid var(--sk-line);
+    border-radius: var(--sk-r);
+    box-shadow: var(--sk-shadow);
+    box-sizing: border-box;
+    padding: 18px 20px;
+}
+
+.sk-vt-card__head {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: -2px 0 14px;
+}
+
+.sk-vt .sk-vt-card__head h2,
+.sk-vt .sk-vt-card > h2 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: .01em;
+    text-transform: none;
+    color: var(--sk-ink);
+}
+
+.sk-vt-card__hint {
+    font-size: 12px;
+    color: var(--sk-ink-faint);
+    font-weight: 400;
+}
+
+.sk-vt-card--flush { padding: 18px 0 0; }
+.sk-vt-card--flush .sk-vt-card__head { padding: 0 20px; }
+
+/* ── Grid ──────────────────────────────────────────────────────────────────── */
+.sk-vt-grid {
+    display: grid;
+    gap: var(--sk-gap);
+    margin-bottom: var(--sk-gap);
+}
+
+.sk-vt-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sk-vt-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sk-vt-grid--wide-left { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); }
+
+/* ── Stat tiles ────────────────────────────────────────────────────────────── */
+.sk-vt-stats {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: var(--sk-gap);
+    margin-bottom: var(--sk-gap);
+}
+
+.sk-vt-stat {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 16px 18px;
+    background: var(--sk-surface);
+    border: 1px solid var(--sk-line);
+    border-radius: var(--sk-r);
+    box-shadow: var(--sk-shadow);
+    overflow: hidden;
+}
+
+/* A hairline in the brand colour, so a tile reads as a tile and not a box. */
+.sk-vt-stat::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    background: var(--sk-brand);
+    opacity: .85;
+}
+
+.sk-vt-stat--live::before { background: var(--sk-up); }
+
+.sk-vt-stat__label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--sk-ink-faint);
+}
+
+.sk-vt-stat__label .dashicons {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+    color: var(--sk-ink-faint);
+}
+
+.sk-vt-stat__num {
+    font-size: 1.9rem;
+    font-weight: 600;
+    line-height: 1.15;
+    color: var(--sk-ink);
+    font-variant-numeric: tabular-nums;
+}
+
+.sk-vt-stat__foot {
+    display: flex;
+    align-items: center;
     gap: 8px;
+    flex-wrap: wrap;
+    font-size: 12px;
+    color: var(--sk-ink-faint);
 }
 
-/* ── Grid rows ─────────────────────────────────────────────────────────────── */
-.sk-vt-row {
-    margin-bottom: 14px;
+/* ── Delta pill ────────────────────────────────────────────────────────────── */
+.sk-vt-delta {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    padding: 1px 6px 1px 4px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
-.sk-vt-row-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 14px;
+.sk-vt-delta .dashicons {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+    line-height: 1;
 }
 
-.sk-vt-row-3 {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 14px;
+.sk-vt-delta--up   { color: var(--sk-up);      background: #edfaef; }
+.sk-vt-delta--down { color: var(--sk-down);    background: #fcf0f1; }
+.sk-vt-delta--flat { color: var(--sk-ink-faint); background: var(--sk-surface-alt); }
+
+/* ── Live dot ──────────────────────────────────────────────────────────────── */
+.sk-vt-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--sk-up);
+    box-shadow: 0 0 0 3px rgba(0, 163, 42, .16);
+    flex: none;
 }
 
-@media (max-width: 1100px) {
-    .sk-vt-row-3 { grid-template-columns: 1fr 1fr; }
+@media (prefers-reduced-motion: no-preference) {
+    .sk-vt-dot { animation: sk-vt-pulse 2.4s ease-in-out infinite; }
+    @keyframes sk-vt-pulse {
+        0%, 100% { box-shadow: 0 0 0 3px rgba(0, 163, 42, .16); }
+        50%      { box-shadow: 0 0 0 5px rgba(0, 163, 42, .06); }
+    }
 }
-@media (max-width: 800px) {
-    .sk-vt-row-2,
-    .sk-vt-row-3 { grid-template-columns: 1fr; }
-    .sk-vt-cards { flex-direction: column; }
-    .sk-vt-stat-card { min-width: 100%; }
+
+/* ── Charts ────────────────────────────────────────────────────────────────── */
+.sk-vt-chart {
+    position: relative;
+    width: 100%;
+}
+
+/* Heights live here, not on a height attribute, so the canvas keeps its
+   aspect ratio instead of being squashed at narrow widths. */
+.sk-vt-chart--line     { height: 260px; }
+.sk-vt-chart--bar      { height: 260px; }
+.sk-vt-chart--doughnut { height: 232px; }
+
+.sk-vt-chart canvas {
+    position: absolute;
+    inset: 0;
+    width: 100% !important;
+    height: 100% !important;
 }
 
 /* ── Tables ────────────────────────────────────────────────────────────────── */
 .sk-vt-table {
-    border: none !important;
+    width: 100%;
+    border: 0 !important;
+    border-collapse: collapse;
+    box-shadow: none !important;
     margin: 0 !important;
+    background: transparent;
 }
 
-.sk-vt-table td,
-.sk-vt-table th {
-    padding: 7px 10px !important;
+.sk-vt-table th,
+.sk-vt-table td {
+    padding: 9px 12px !important;
     font-size: 13px !important;
     vertical-align: middle !important;
+    border-bottom: 1px solid var(--sk-line-soft) !important;
 }
 
-.sk-vt-table th {
+.sk-vt-table thead th {
+    background: var(--sk-surface-alt);
+    font-size: 11px !important;
     font-weight: 600 !important;
-    color: #3c434a !important;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: var(--sk-ink-soft) !important;
+    border-bottom: 1px solid var(--sk-line) !important;
+    white-space: nowrap;
 }
 
-.sk-vt-table a {
-    text-decoration: none;
-    color: #2271b1;
-}
-.sk-vt-table a:hover {
-    text-decoration: underline;
-}
+.sk-vt-table tbody tr:last-child td { border-bottom: 0 !important; }
+.sk-vt-table tbody tr:hover { background: var(--sk-brand-soft); }
+
+.sk-vt-table a { text-decoration: none; color: var(--sk-brand); }
+.sk-vt-table a:hover { text-decoration: underline; }
 
 .sk-vt-num {
     text-align: right !important;
     white-space: nowrap;
+    font-variant-numeric: tabular-nums;
 }
 
-.sk-vt-url-preview {
-    font-size: 11px;
-    color: #aaa;
-    margin-top: 2px;
-    white-space: nowrap;
+.sk-vt-rank {
+    width: 34px;
+    text-align: right !important;
+    color: var(--sk-ink-faint);
+    font-size: 12px !important;
+    font-variant-numeric: tabular-nums;
+}
+
+.sk-vt-table tfoot td {
+    background: var(--sk-surface-alt);
+    font-weight: 600;
+    border-top: 1px solid var(--sk-line) !important;
+    border-bottom: 0 !important;
+}
+
+/* Sortable headers */
+.sk-vt-table th a {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: inherit;
+    text-decoration: none;
+}
+
+.sk-vt-table th a:hover { color: var(--sk-brand); }
+
+.sk-vt-table th a .dashicons {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    opacity: .35;
+}
+
+.sk-vt-table th[aria-sort] a { color: var(--sk-brand); }
+.sk-vt-table th[aria-sort] a .dashicons { opacity: 1; }
+
+/* Page title + url */
+.sk-vt-title {
+    display: block;
+    font-weight: 500;
+    max-width: 52ch;
     overflow: hidden;
     text-overflow: ellipsis;
-    max-width: 380px;
-}
-
-/* ── Country % bar ─────────────────────────────────────────────────────────── */
-.sk-vt-bar-wrap {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    height: 16px;
-}
-
-.sk-vt-bar-fill {
-    height: 8px;
-    background: #2271b1;
-    border-radius: 4px;
-    min-width: 2px;
-    transition: width .3s ease;
-    opacity: .7;
-}
-
-.sk-vt-bar-label {
-    font-size: 11px;
-    color: #646970;
     white-space: nowrap;
 }
 
-/* ── "See all" link in h2 ──────────────────────────────────────────────────── */
-.sk-vt-see-all {
-    font-size: 12px;
-    font-weight: 400;
-    color: #2271b1;
-    text-decoration: none;
-    margin-left: auto;
+.sk-vt-url {
+    display: block;
+    font-size: 11px;
+    color: var(--sk-ink-faint);
+    max-width: 52ch;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: 1px;
 }
-.sk-vt-see-all:hover { text-decoration: underline; }
 
-/* ── Period switcher ───────────────────────────────────────────────────────── */
-.sk-vt-period-switcher {
+/* ── Share bar ─────────────────────────────────────────────────────────────── */
+.sk-vt-share {
     display: flex;
-    gap: 6px;
-    margin: 10px 0 0;
-    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    min-width: 120px;
 }
 
-.sk-vt-period-switcher .button {
-    font-size: 12px;
-    padding: 2px 10px;
-    height: 28px;
-    line-height: 26px;
+.sk-vt-share__track {
+    flex: 1;
+    height: 6px;
+    background: var(--sk-line-soft);
+    border-radius: 999px;
+    overflow: hidden;
 }
 
-/* ── Settings page ─────────────────────────────────────────────────────────── */
-.sk-vt-info-box {
-    max-width: 660px;
-    margin-bottom: 20px;
+.sk-vt-share__fill {
+    display: block;
+    height: 100%;
+    background: var(--sk-brand);
+    border-radius: 999px;
+    min-width: 2px;
 }
 
-.sk-vt-info-box h2 {
-    margin-top: 0;
+.sk-vt-share__pct {
+    font-size: 11px;
+    color: var(--sk-ink-faint);
+    font-variant-numeric: tabular-nums;
+    width: 40px;
+    text-align: right;
 }
 
-.sk-vt-info-table {
+/* ── Flag + country ────────────────────────────────────────────────────────── */
+.sk-vt-country {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.sk-vt-flag {
+    font-size: 15px;
+    line-height: 1;
+    /* Emoji flags only; no image request and nothing to ship. */
+    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+
+.sk-vt-code {
+    font-size: 11px;
+    color: var(--sk-ink-faint);
+    letter-spacing: .04em;
+}
+
+/* ── Badges ────────────────────────────────────────────────────────────────── */
+.sk-vt-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 18px;
+    white-space: nowrap;
+}
+
+.sk-vt-badge .dashicons { font-size: 13px; width: 13px; height: 13px; }
+
+.sk-vt-badge--ok     { color: var(--sk-up);        background: #edfaef; }
+.sk-vt-badge--info   { color: var(--sk-brand);     background: var(--sk-brand-soft); }
+.sk-vt-badge--warn   { color: var(--sk-warn);      background: #fcf9e8; }
+.sk-vt-badge--muted  { color: var(--sk-ink-faint); background: var(--sk-surface-alt); }
+
+/* ── Empty state ───────────────────────────────────────────────────────────── */
+.sk-vt-empty {
+    text-align: center;
+    padding: 34px 20px;
+    color: var(--sk-ink-faint);
+}
+
+.sk-vt-empty .dashicons {
+    font-size: 30px;
+    width: 30px;
+    height: 30px;
+    color: var(--sk-line);
+    margin-bottom: 8px;
+}
+
+.sk-vt-empty__title {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sk-ink-soft);
+    margin-bottom: 3px;
+}
+
+.sk-vt-empty p {
+    margin: 0 auto;
+    font-size: 12.5px;
+    max-width: 44ch;
+    line-height: 1.6;
+}
+
+/* ── Definition rows (overview / developer tables) ─────────────────────────── */
+.sk-vt-defs {
     width: 100%;
     border-collapse: collapse;
 }
 
-.sk-vt-info-table td {
-    padding: 5px 0;
+.sk-vt-defs th,
+.sk-vt-defs td {
+    padding: 9px 0;
     font-size: 13px;
-    border-bottom: 1px solid #f0f0f1;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--sk-line-soft);
 }
 
-.sk-vt-info-table td:first-child {
-    color: #646970;
-    width: 55%;
+.sk-vt-defs tr:last-child th,
+.sk-vt-defs tr:last-child td { border-bottom: 0; }
+
+.sk-vt-defs th {
+    width: 34%;
+    font-weight: 500;
+    color: var(--sk-ink-faint);
+    padding-right: 16px;
 }
 
-.sk-vt-info-table td:last-child {
+.sk-vt-defs td { color: var(--sk-ink); }
+.sk-vt-defs td strong { font-variant-numeric: tabular-nums; }
+
+.sk-vt-defs code {
+    font-size: 12px;
+    background: var(--sk-surface-alt);
+    padding: 2px 5px;
+    border-radius: var(--sk-r-sm);
+}
+
+/* ── Prose (How it works) ──────────────────────────────────────────────────── */
+.sk-vt-prose p {
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: var(--sk-ink-soft);
+    margin: 0 0 12px;
+    max-width: 76ch;
+}
+
+.sk-vt-prose p:last-child { margin-bottom: 0; }
+.sk-vt-prose strong { color: var(--sk-ink); }
+
+.sk-vt-note {
+    display: flex;
+    gap: 10px;
+    padding: 12px 14px;
+    background: var(--sk-brand-soft);
+    border-left: 3px solid var(--sk-brand);
+    border-radius: var(--sk-r-sm);
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--sk-ink-soft);
+    margin: 14px 0 0;
+}
+
+.sk-vt-note .dashicons { color: var(--sk-brand); flex: none; }
+.sk-vt-note--warn { background: #fcf9e8; border-left-color: #dba617; }
+.sk-vt-note--warn .dashicons { color: var(--sk-warn); }
+.sk-vt-note p { margin: 0; max-width: 72ch; }
+
+/* ── Table of contents ─────────────────────────────────────────────────────── */
+.sk-vt-toc {
+    position: sticky;
+    top: 46px;
+    align-self: start;
+}
+
+.sk-vt-toc ol {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: sk-toc;
+}
+
+.sk-vt-toc li { counter-increment: sk-toc; }
+
+.sk-vt-toc a {
+    display: flex;
+    gap: 9px;
+    padding: 7px 0;
+    font-size: 13px;
+    line-height: 1.45;
+    color: var(--sk-ink-soft);
+    text-decoration: none;
+    border-bottom: 1px solid var(--sk-line-soft);
+}
+
+.sk-vt-toc li:last-child a { border-bottom: 0; }
+
+.sk-vt-toc a::before {
+    content: counter(sk-toc);
+    flex: none;
+    width: 18px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--sk-ink-faint);
     text-align: right;
+    padding-top: 1px;
 }
 
-.sk-vt-settings .form-table th {
-    width: 200px;
+.sk-vt-toc a:hover { color: var(--sk-brand); }
+.sk-vt-toc a:hover::before { color: var(--sk-brand); }
+
+/* ── Settings ──────────────────────────────────────────────────────────────── */
+.sk-vt-fieldset {
+    border: 0;
+    padding: 0;
+    margin: 0 0 var(--sk-gap);
+}
+
+.sk-vt-fieldset legend {
+    padding: 0;
+    margin: 0 0 3px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--sk-ink);
+}
+
+.sk-vt-fieldset__sub {
+    margin: 0 0 14px;
+    font-size: 12.5px;
+    color: var(--sk-ink-faint);
+    max-width: 70ch;
+}
+
+.sk-vt-opt {
+    display: grid;
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 2px 10px;
+    padding: 13px 0;
+    border-top: 1px solid var(--sk-line-soft);
+}
+
+.sk-vt-opt:first-of-type { border-top: 0; padding-top: 2px; }
+
+.sk-vt-opt input[type="checkbox"] { margin: 2px 0 0; }
+
+/*
+ * The clickable label is the name only. The explanation sits outside it on
+ * purpose: when the description was inside the label, clicking anywhere in a
+ * three-sentence paragraph toggled the setting -- including the one that
+ * decides whether deleting the plugin destroys every visit it ever recorded.
+ */
+.sk-vt-opt__name {
+    grid-column: 2;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--sk-ink);
+    cursor: pointer;
+}
+
+.sk-vt-opt__desc {
+    grid-column: 2;
+    margin: 2px 0 0;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--sk-ink-faint);
+    max-width: 74ch;
+}
+
+.sk-vt-opt__desc code {
+    font-size: 12px;
+    background: var(--sk-surface-alt);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+.sk-vt-opt--danger {
+    background: #fcf0f1;
+    border: 1px solid #f3c7c8;
+    border-radius: var(--sk-r-sm);
+    padding: 13px 14px;
+    margin-top: 14px;
+    grid-template-columns: 24px minmax(0, 1fr);
+}
+
+.sk-vt-opt--danger .sk-vt-opt__name { color: #8a2424; }
+
+.sk-vt-field {
+    padding: 13px 0;
+    border-top: 1px solid var(--sk-line-soft);
+}
+
+.sk-vt-field__name {
+    display: block;
+    font-size: 13.5px;
+    font-weight: 500;
+    margin-bottom: 6px;
+}
+
+.sk-vt-field__desc {
+    margin: 6px 0 0;
+    font-size: 12.5px;
+    line-height: 1.6;
+    color: var(--sk-ink-faint);
+    max-width: 74ch;
+}
+
+.sk-vt .sk-vt-submit {
+    margin: 0;
+    padding: 16px 0 0;
+    border-top: 1px solid var(--sk-line);
+}
+
+/* ── Import source cards ───────────────────────────────────────────────────── */
+.sk-vt-source__figures {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+    margin: 0 0 14px;
+}
+
+.sk-vt-source__figure dt {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--sk-ink-faint);
+    margin-bottom: 2px;
+}
+
+.sk-vt-source__figure dd {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 600;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+}
+
+.sk-vt-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin: 0;
+}
+
+.sk-vt-actions__note {
+    font-size: 12px;
+    color: var(--sk-ink-faint);
+}
+
+/* Buttons that carry a dashicon */
+.sk-vt .button .dashicons {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    line-height: 1;
+    vertical-align: text-bottom;
+    margin-right: 3px;
+}
+
+/* ── Search box ────────────────────────────────────────────────────────────── */
+.sk-vt-search {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.sk-vt-search input[type="search"] {
+    min-width: 220px;
+    height: 30px;
+    line-height: 28px;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────────── */
+@media (max-width: 1400px) {
+    .sk-vt-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 1100px) {
+    .sk-vt-grid--3,
+    .sk-vt-grid--wide-left { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 860px) {
+    .sk-vt-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .sk-vt-grid--2,
+    .sk-vt-grid--3,
+    .sk-vt-grid--wide-left { grid-template-columns: minmax(0, 1fr); }
+    .sk-vt-toc { position: static; }
+    .sk-vt-head { align-items: flex-start; }
+    .sk-vt-title,
+    .sk-vt-url { max-width: 34ch; }
+}
+
+@media (max-width: 600px) {
+    .sk-vt-stats { grid-template-columns: minmax(0, 1fr); }
+    .sk-vt-card { padding: 15px 14px; }
+    .sk-vt-card--flush .sk-vt-card__head { padding: 0 14px; }
+    .sk-vt-seg { width: 100%; justify-content: space-between; }
+    .sk-vt-source__figures { gap: 20px; }
+}
+
+/* ── Pagination ────────────────────────────────────────────────────────────── */
+.sk-vt-tablefoot {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px 20px;
+    border-top: 1px solid var(--sk-line);
+    background: var(--sk-surface-alt);
+    border-radius: 0 0 var(--sk-r) var(--sk-r);
+}
+
+/* Nothing to page through: the row-count line should not look like a control. */
+.sk-vt-tablefoot:has(> .sk-vt-perpage:only-child) { justify-content: flex-end; }
+
+.sk-vt-tablenav {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+
+.sk-vt-tablenav__count {
+    font-size: 12px;
+    color: var(--sk-ink-faint);
+    font-variant-numeric: tabular-nums;
+}
+
+.sk-vt-pages {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    flex-wrap: wrap;
+}
+
+.sk-vt-pages .page-numbers {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 7px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--sk-ink-soft);
+    text-decoration: none;
+    background: var(--sk-surface);
+    border: 1px solid var(--sk-line);
+    border-radius: var(--sk-r-sm);
+    font-variant-numeric: tabular-nums;
+}
+
+.sk-vt-pages a.page-numbers:hover,
+.sk-vt-pages a.page-numbers:focus {
+    border-color: var(--sk-brand);
+    color: var(--sk-brand);
+}
+
+.sk-vt-pages .page-numbers.current {
+    background: var(--sk-brand);
+    border-color: var(--sk-brand);
+    color: #fff;
+    font-weight: 600;
+}
+
+.sk-vt-pages .page-numbers.dots {
+    border-color: transparent;
+    background: none;
+    min-width: 18px;
+    padding: 0 2px;
+    color: var(--sk-ink-faint);
+}
+
+.sk-vt-pages a.page-numbers:focus-visible {
+    outline: 2px solid var(--sk-brand);
+    outline-offset: 1px;
+}
+
+/* ── Rows-per-page ─────────────────────────────────────────────────────────── */
+.sk-vt-perpage {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    color: var(--sk-ink-faint);
+}
+
+.sk-vt-perpage a {
+    padding: 2px 7px;
+    border-radius: var(--sk-r-sm);
+    color: var(--sk-ink-soft);
+    text-decoration: none;
+    font-variant-numeric: tabular-nums;
+}
+
+.sk-vt-perpage a:hover { background: rgba(0, 0, 0, .05); color: var(--sk-ink); }
+
+.sk-vt-perpage a[aria-current="true"] {
+    background: var(--sk-surface);
+    border: 1px solid var(--sk-line);
+    color: var(--sk-brand);
+    font-weight: 600;
+    padding: 1px 6px;
+}
+
+@media (max-width: 600px) {
+    .sk-vt-tablefoot { flex-direction: column; align-items: stretch; }
+    .sk-vt-tablenav { justify-content: space-between; }
 }

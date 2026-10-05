@@ -173,7 +173,7 @@ final class Shrikant_Visitor_Tracker {
         $this->services['cron']     = new Shrikant_VT_Cron( $this->services['settings'] );
 
         // Front-end display of the view count.
-        $this->services['display'] = new Shrikant_VT_Display( $this->services['stats'] );
+        $this->services['display'] = new Shrikant_VT_Display( $this->services['stats'], $this->services['settings'] );
 
         // REST API (registered on rest_api_init — safe to load always).
         $this->services['rest'] = new Shrikant_VT_REST(

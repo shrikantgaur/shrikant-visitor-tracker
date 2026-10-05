@@ -111,8 +111,8 @@ final class Shrikant_VT_Admin {
                 <h4><?php echo esc_html( $label ); ?></h4>
                 <div class="sk-vt-dw-num"><?php echo esc_html( number_format_i18n( $data['pageviews'] ) ); ?></div>
                 <div class="sk-vt-dw-sub"><?php
-                    /* translators: %s: number of unique visitors. */
-                    printf( esc_html__( '%s unique', 'shrikant-visitor-tracker' ), esc_html( number_format_i18n( $data['unique_visitors'] ) ) );
+                    /* translators: %s: number of distinct visitors. */
+                    printf( esc_html__( 'from %s visitors', 'shrikant-visitor-tracker' ), esc_html( number_format_i18n( $data['unique_visitors'] ) ) );
                 ?></div>
             </div>
             <?php endforeach; ?>
@@ -638,6 +638,7 @@ final class Shrikant_VT_Admin {
                     <?php echo esc_html( $tile['label'] ); ?>
                 </span>
                 <span class="sk-vt-stat__num"><?php echo esc_html( number_format_i18n( $tile['now']['pageviews'] ) ); ?></span>
+                <span class="sk-vt-stat__unit"><?php esc_html_e( 'page views', 'shrikant-visitor-tracker' ); ?></span>
                 <span class="sk-vt-stat__foot">
                     <?php if ( null !== $tile['prev'] ) : ?>
                         <?php $this->delta( (int) $tile['now']['pageviews'], (int) $tile['prev']['pageviews'] ); ?>
@@ -646,8 +647,8 @@ final class Shrikant_VT_Admin {
                 </span>
                 <span class="sk-vt-stat__foot">
                     <?php
-                    /* translators: %s: number of unique visitors. */
-                    printf( esc_html__( '%s unique', 'shrikant-visitor-tracker' ), esc_html( number_format_i18n( $tile['now']['unique_visitors'] ) ) );
+                    /* translators: %s: number of distinct visitors. */
+                    printf( esc_html__( 'from %s visitors', 'shrikant-visitor-tracker' ), esc_html( number_format_i18n( $tile['now']['unique_visitors'] ) ) );
                     ?>
                 </span>
             </div>
@@ -696,14 +697,19 @@ final class Shrikant_VT_Admin {
         $sum_pv = $overall['pageviews'] ?? array_sum( array_column( $pages, 'pageviews' ) );
         $top_pv = $overall['max'] ?? max( array_column( $pages, 'pageviews' ) );
         ?>
+        <p class="sk-vt-legend">
+            <span><strong><?php esc_html_e( 'Views', 'shrikant-visitor-tracker' ); ?></strong> <?php esc_html_e( 'every time the page was opened', 'shrikant-visitor-tracker' ); ?></span>
+            <span><strong><?php esc_html_e( 'Visitors', 'shrikant-visitor-tracker' ); ?></strong> <?php esc_html_e( 'how many people that was — one person reading twice is 2 views, 1 visitor', 'shrikant-visitor-tracker' ); ?></span>
+            <span><strong><?php esc_html_e( 'Share', 'shrikant-visitor-tracker' ); ?></strong> <?php esc_html_e( 'this page\'s slice of all views in the period', 'shrikant-visitor-tracker' ); ?></span>
+        </p>
         <table class="sk-vt-table">
             <thead>
                 <tr>
                     <th class="sk-vt-rank" scope="col"><span class="screen-reader-text"><?php esc_html_e( 'Rank', 'shrikant-visitor-tracker' ); ?></span>#</th>
                     <th scope="col"><?php $this->sort_header( 'title', __( 'Page', 'shrikant-visitor-tracker' ), $sort, $keep ); ?></th>
                     <th class="sk-vt-num" scope="col"><?php $this->sort_header( 'views', __( 'Views', 'shrikant-visitor-tracker' ), $sort, $keep ); ?></th>
-                    <th class="sk-vt-num" scope="col"><?php $this->sort_header( 'unique', __( 'Unique', 'shrikant-visitor-tracker' ), $sort, $keep ); ?></th>
-                    <th scope="col" style="width:150px"><?php esc_html_e( 'Share of views', 'shrikant-visitor-tracker' ); ?></th>
+                    <th class="sk-vt-num" scope="col"><?php $this->sort_header( 'unique', __( 'Visitors', 'shrikant-visitor-tracker' ), $sort, $keep ); ?></th>
+                    <th scope="col" style="width:150px"><?php esc_html_e( 'Share', 'shrikant-visitor-tracker' ); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -809,7 +815,7 @@ final class Shrikant_VT_Admin {
                 <tr>
                     <th scope="col"><?php esc_html_e( 'Country', 'shrikant-visitor-tracker' ); ?></th>
                     <th class="sk-vt-num" scope="col"><?php esc_html_e( 'Views', 'shrikant-visitor-tracker' ); ?></th>
-                    <th scope="col" style="width:140px"><?php esc_html_e( 'Share', 'shrikant-visitor-tracker' ); ?></th>
+                    <th scope="col" style="width:140px"><?php esc_html_e( 'Share of views', 'shrikant-visitor-tracker' ); ?></th>
                 </tr>
             </thead>
             <tbody>
@@ -1164,6 +1170,40 @@ final class Shrikant_VT_Admin {
                     </fieldset>
 
                     <fieldset class="sk-vt-fieldset">
+                        <legend><?php esc_html_e( 'Show the count to readers', 'shrikant-visitor-tracker' ); ?></legend>
+                        <p class="sk-vt-fieldset__sub"><?php esc_html_e( 'Adds a line like "Views: 1,234" at the end of the content. This is only about what visitors see — tracking carries on either way.', 'shrikant-visitor-tracker' ); ?></p>
+                        <?php
+                        $this->option(
+                            'auto_display',
+                            __( 'Add the count automatically', 'shrikant-visitor-tracker' ),
+                            __( 'Turn this off to place the count yourself with the [sk_views] shortcode or a block, instead of having it appended.', 'shrikant-visitor-tracker' ),
+                            $this->settings->auto_display()
+                        );
+
+                        $chosen = $this->settings->display_post_types();
+                        $types  = get_post_types( [ 'public' => true ], 'objects' );
+                        unset( $types['attachment'] );
+                        ?>
+                        <div class="sk-vt-field">
+                            <span class="sk-vt-field__name"><?php esc_html_e( 'Show it on', 'shrikant-visitor-tracker' ); ?></span>
+                            <div class="sk-vt-checks">
+                                <?php foreach ( $types as $type ) :
+                                    $id = 'sk-vt-pt-' . $type->name;
+                                    ?>
+                                    <label class="sk-vt-check" for="<?php echo esc_attr( $id ); ?>">
+                                        <input type="checkbox" id="<?php echo esc_attr( $id ); ?>"
+                                               name="display_post_types[]" value="<?php echo esc_attr( $type->name ); ?>"
+                                               <?php checked( in_array( $type->name, $chosen, true ) ); ?>>
+                                        <span><?php echo esc_html( $type->labels->name ); ?></span>
+                                        <code><?php echo esc_html( $type->name ); ?></code>
+                                    </label>
+                                <?php endforeach; ?>
+                            </div>
+                            <p class="sk-vt-field__desc"><?php esc_html_e( 'Every public post type on this site is listed, including ones added by your theme or other plugins. Tick none and the count is not added anywhere automatically.', 'shrikant-visitor-tracker' ); ?></p>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="sk-vt-fieldset">
                         <legend><?php esc_html_e( 'Privacy', 'shrikant-visitor-tracker' ); ?></legend>
                         <p class="sk-vt-fieldset__sub"><?php esc_html_e( 'The raw IP address is never written to the database. These control what happens before that.', 'shrikant-visitor-tracker' ); ?></p>
                         <?php
@@ -1261,7 +1301,7 @@ final class Shrikant_VT_Admin {
                                     <td><strong><?php echo esc_html( number_format_i18n( $alltime['pageviews'] ) ); ?></strong></td>
                                 </tr>
                                 <tr>
-                                    <th scope="row"><?php esc_html_e( 'Unique visits', 'shrikant-visitor-tracker' ); ?></th>
+                                    <th scope="row"><?php esc_html_e( 'Visitors', 'shrikant-visitor-tracker' ); ?></th>
                                     <td><strong><?php echo esc_html( number_format_i18n( $alltime['unique_visitors'] ) ); ?></strong></td>
                                 </tr>
                                 <tr>
@@ -1392,15 +1432,61 @@ final class Shrikant_VT_Admin {
             <?php endif; // phpcs:enable WordPress.Security.NonceVerification.Recommended ?>
 
             <div class="sk-vt-card" style="margin-bottom:16px">
-                <div class="sk-vt-card__head"><h2><?php esc_html_e( 'Before you start', 'shrikant-visitor-tracker' ); ?></h2></div>
-                <div class="sk-vt-prose">
-                    <p><?php esc_html_e( 'Imported counts are kept separate from what this plugin records itself, and are never added into its own statistics. They are two different measurements: the imported total covers however long the other counter was running, under whatever it treated as a view, while this plugin counts only from the day it was switched on and leaves out the bots it recognises. Added together they would mean nothing in particular.', 'shrikant-visitor-tracker' ); ?></p>
-                    <p><?php esc_html_e( 'A reader sees the two added together, so no page appears to lose its history. The dashboard shows only what was actually tracked.', 'shrikant-visitor-tracker' ); ?></p>
-                </div>
+                <div class="sk-vt-card__head"><h2><?php esc_html_e( 'How this works', 'shrikant-visitor-tracker' ); ?></h2></div>
+
+                <?php
+                /*
+                 * Four steps rather than four paragraphs. The order is the
+                 * part that matters -- importing after the old plugin is gone
+                 * is too late, and that is the mistake this screen exists to
+                 * prevent.
+                 */
+                $steps = [
+                    [
+                        'icon'  => 'search',
+                        'title' => __( 'We read what is there', 'shrikant-visitor-tracker' ),
+                        'body'  => __( 'Each counter below shows how much history it is holding. Nothing has been copied yet.', 'shrikant-visitor-tracker' ),
+                    ],
+                    [
+                        'icon'  => 'download',
+                        'title' => __( 'You press Import', 'shrikant-visitor-tracker' ),
+                        'body'  => __( 'The totals are copied across, per post. The other plugin is only read from — nothing in it is changed or deleted.', 'shrikant-visitor-tracker' ),
+                    ],
+                    [
+                        'icon'  => 'visibility',
+                        'title' => __( 'Readers keep seeing their counts', 'shrikant-visitor-tracker' ),
+                        'body'  => __( 'The number on a post becomes the imported total plus whatever this plugin records from now on, so no article appears to lose its history.', 'shrikant-visitor-tracker' ),
+                    ],
+                    [
+                        'icon'  => 'trash',
+                        'title' => __( 'Then the old plugin can go', 'shrikant-visitor-tracker' ),
+                        'body'  => __( 'Check a post or two first. Once the numbers look right, the other plugin is no longer needed for them.', 'shrikant-visitor-tracker' ),
+                    ],
+                ];
+                ?>
+                <ol class="sk-vt-steps">
+                    <?php foreach ( $steps as $step ) : ?>
+                        <li>
+                            <span class="sk-vt-steps__icon"><span class="dashicons dashicons-<?php echo esc_attr( $step['icon'] ); ?>" aria-hidden="true"></span></span>
+                            <span class="sk-vt-steps__title"><?php echo esc_html( $step['title'] ); ?></span>
+                            <span class="sk-vt-steps__body"><?php echo esc_html( $step['body'] ); ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ol>
+
                 <div class="sk-vt-note">
                     <span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
-                    <p><?php esc_html_e( 'Running an import twice is safe. Each post\'s figure is replaced, not added to. Nothing is changed or removed in the plugin the figures come from.', 'shrikant-visitor-tracker' ); ?></p>
+                    <p><?php esc_html_e( 'Safe to run more than once — each post\'s imported figure is replaced, never added to, so a second run cannot double anybody\'s history.', 'shrikant-visitor-tracker' ); ?></p>
                 </div>
+
+                <details class="sk-vt-details">
+                    <summary><?php esc_html_e( 'Why the imported number is kept separate', 'shrikant-visitor-tracker' ); ?></summary>
+                    <div class="sk-vt-prose">
+                        <p><?php esc_html_e( 'Imported counts are stored apart from what this plugin records itself, and are never added into its own statistics. They are two different measurements: the imported total covers however long the other counter was running, under whatever it treated as a view, while this plugin counts only from the day it was switched on and leaves out the bots it recognises.', 'shrikant-visitor-tracker' ); ?></p>
+                        <p><?php esc_html_e( 'So a reader sees the two added together and nothing appears lost, while the dashboard shows only what was actually tracked and stays comparable with itself.', 'shrikant-visitor-tracker' ); ?></p>
+                    </div>
+                </details>
+
                 <p class="sk-vt-disclaimer">
                     <?php esc_html_e( 'The plugins named below are separate projects by their own authors. They are listed here only so their data can be read; this plugin is not affiliated with or endorsed by them.', 'shrikant-visitor-tracker' ); ?>
                 </p>
@@ -1498,6 +1584,7 @@ final class Shrikant_VT_Admin {
         $rest     = rest_url( 'sk-vt/v1/' );
         $sections = [
             'counting'    => __( 'How a visit is counted', 'shrikant-visitor-tracker' ),
+            'words'       => __( 'Views, visitors and share', 'shrikant-visitor-tracker' ),
             'differences' => __( 'Why this figure differs from another counter\'s', 'shrikant-visitor-tracker' ),
             'display'     => __( 'Showing the count to readers', 'shrikant-visitor-tracker' ),
             'migrating'   => __( 'Coming from another counter', 'shrikant-visitor-tracker' ),
@@ -1530,6 +1617,34 @@ final class Shrikant_VT_Admin {
                         <div class="sk-vt-prose">
                             <p><?php esc_html_e( 'When a page finishes loading, a small script in the footer sends one request back to your site saying "this page was viewed". That is the whole mechanism.', 'shrikant-visitor-tracker' ); ?></p>
                             <p><?php esc_html_e( 'It works this way on purpose. Most view counters add up in PHP while the page is being built — which means that on a site with a page cache, a reader served from the cache is never counted at all, because PHP never ran. The counting here happens in the reader\'s browser, so a cached page is counted exactly like an uncached one.', 'shrikant-visitor-tracker' ); ?></p>
+                        </div>
+                    </div>
+
+                    <div class="sk-vt-card" id="sk-vt-words" style="margin-bottom:16px">
+                        <div class="sk-vt-card__head"><h2><?php echo esc_html( $sections['words'] ); ?></h2></div>
+                        <table class="sk-vt-defs">
+                            <tbody>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e( 'Views', 'shrikant-visitor-tracker' ); ?></th>
+                                    <td><?php esc_html_e( 'Every time a page was opened. Open the same article twice and that is two views.', 'shrikant-visitor-tracker' ); ?></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e( 'Visitors', 'shrikant-visitor-tracker' ); ?></th>
+                                    <td><?php esc_html_e( 'How many different people those views came from, counted once each per day. Open the same article twice in a day and that is one visitor.', 'shrikant-visitor-tracker' ); ?></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e( 'Share', 'shrikant-visitor-tracker' ); ?></th>
+                                    <td><?php esc_html_e( 'That row\'s slice of all the views in the period you are looking at. The whole column adds up to 100%.', 'shrikant-visitor-tracker' ); ?></td>
+                                </tr>
+                                <tr>
+                                    <th scope="row"><?php esc_html_e( 'Online now', 'shrikant-visitor-tracker' ); ?></th>
+                                    <td><?php esc_html_e( 'Visitors seen within the last few minutes. How few is set in Settings.', 'shrikant-visitor-tracker' ); ?></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="sk-vt-note">
+                            <span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
+                            <p><?php esc_html_e( 'Views is always the larger of the two. If they are close, most people are reading one page and leaving.', 'shrikant-visitor-tracker' ); ?></p>
                         </div>
                     </div>
 

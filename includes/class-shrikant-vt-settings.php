@@ -80,6 +80,50 @@ final class Shrikant_VT_Settings {
         return (bool) $this->data['geo_enabled'];
     }
 
+    /** Whether the count is appended to content automatically. */
+    public function auto_display(): bool {
+        return ! empty( $this->data['auto_display'] );
+    }
+
+    /**
+     * Post types the count is shown on.
+     *
+     * @return array<int,string>
+     */
+    public function display_post_types(): array {
+        $types = $this->data['display_post_types'] ?? [ 'post' ];
+
+        return self::clean_post_types( is_array( $types ) ? $types : [ $types ] );
+    }
+
+    /**
+     * Keep only post types that exist and are public.
+     *
+     * A type can disappear between being chosen and being read -- the plugin
+     * that registered it gets deactivated -- so the stored list is filtered on
+     * the way out as well as on the way in, rather than trusted.
+     *
+     * @param mixed $input Raw list.
+     * @return array<int,string>
+     */
+    private static function clean_post_types( $input ): array {
+        if ( ! is_array( $input ) ) {
+            return [];
+        }
+
+        $public = get_post_types( [ 'public' => true ] );
+        $clean  = [];
+
+        foreach ( $input as $type ) {
+            $type = sanitize_key( (string) $type );
+            if ( isset( $public[ $type ] ) && ! in_array( $type, $clean, true ) ) {
+                $clean[] = $type;
+            }
+        }
+
+        return $clean;
+    }
+
     /** How long (seconds) to cache a geo lookup result. Min 86400 (24h). */
     public function geo_cache_ttl(): int {
         $ttl = (int) $this->data['geo_cache_ttl'];
@@ -125,6 +169,14 @@ final class Shrikant_VT_Settings {
             'geo_cache_ttl'     => 86400,  // 24 hours.
 
             /*
+             * Where the view count is shown to readers. Posts only by default,
+             * because that is what most sites want and showing a count on a
+             * contact page helps nobody. Any public post type can be added.
+             */
+            'auto_display'      => true,
+            'display_post_types' => [ 'post' ],
+
+            /*
              * Deleting the plugin from wp-admin runs uninstall.php, which used
              * to drop both tables unconditionally. Swapping this plugin for a
              * renamed build of itself -- exactly what happens when a hand-
@@ -155,6 +207,8 @@ final class Shrikant_VT_Settings {
             'async_tracking'    => ! empty( $input['async_tracking'] ),
             'geo_enabled'       => ! empty( $input['geo_enabled'] ),
             'geo_cache_ttl'     => max( 86400, absint( $input['geo_cache_ttl'] ?? 86400 ) ),
+            'auto_display'      => ! empty( $input['auto_display'] ),
+            'display_post_types' => self::clean_post_types( $input['display_post_types'] ?? [] ),
         ];
     }
 

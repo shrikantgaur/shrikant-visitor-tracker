@@ -23,7 +23,8 @@ defined( 'ABSPATH' ) || exit;
 final class Shrikant_VT_Display {
 
 	public function __construct(
-		private readonly Shrikant_VT_Stats $stats
+		private readonly Shrikant_VT_Stats $stats,
+		private readonly ?Shrikant_VT_Settings $settings = null
 	) {}
 
 	/**
@@ -58,10 +59,20 @@ final class Shrikant_VT_Display {
 			return false;
 		}
 
-		$enabled = (array) apply_filters(
-			'shrikant_vt_display_post_types',
-			[ 'post' ]
-		);
+		// Settings → "Show the count to readers". The filter still has the
+		// final say, so a theme can override whatever is chosen there.
+		if ( $this->settings && ! $this->settings->auto_display() ) {
+			return false;
+		}
+
+		$chosen = $this->settings ? $this->settings->display_post_types() : [ 'post' ];
+
+		/**
+		 * Filter: shrikant_vt_display_post_types
+		 *
+		 * @param array<int,string> $chosen Post types chosen in Settings.
+		 */
+		$enabled = (array) apply_filters( 'shrikant_vt_display_post_types', $chosen );
 
 		return in_array( get_post_type(), $enabled, true );
 	}

@@ -937,3 +937,12 @@
     border-radius: var(--sk-r-sm);
     box-sizing: border-box;
 }
+
+/* ── Attribution note ──────────────────────────────────────────────────────── */
+.sk-vt-disclaimer {
+    margin: 14px 0 0;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--sk-ink-faint);
+    max-width: 78ch;
+}

@@ -1379,7 +1379,7 @@ final class Shrikant_VT_Admin {
                     <p><?php
                         printf(
                             /* translators: 1: number of views, 2: number of posts */
-                            esc_html__( 'Imported %1$s views across %2$s posts. You can delete the plugin they came from now.', 'shrikant-visitor-tracker' ),
+                            esc_html__( 'Imported %1$s views across %2$s posts. Those figures are stored here now and no longer depend on the plugin they came from.', 'shrikant-visitor-tracker' ),
                             '<strong>' . esc_html( number_format_i18n( (int) $_GET['shrikant_vt_views'] ) ) . '</strong>',
                             '<strong>' . esc_html( number_format_i18n( isset( $_GET['shrikant_vt_posts'] ) ? (int) $_GET['shrikant_vt_posts'] : 0 ) ) . '</strong>'
                         );
@@ -1394,13 +1394,16 @@ final class Shrikant_VT_Admin {
             <div class="sk-vt-card" style="margin-bottom:16px">
                 <div class="sk-vt-card__head"><h2><?php esc_html_e( 'Before you start', 'shrikant-visitor-tracker' ); ?></h2></div>
                 <div class="sk-vt-prose">
-                    <p><?php esc_html_e( 'Imported counts are kept separate from what this plugin records itself, and are never added into its own statistics. The two measure different things: a counter that runs in PHP misses every reader served from a page cache and counts the crawlers that miss it, so the figures usually disagree by several times over. Blending them would make both untrustworthy.', 'shrikant-visitor-tracker' ); ?></p>
+                    <p><?php esc_html_e( 'Imported counts are kept separate from what this plugin records itself, and are never added into its own statistics. They are two different measurements: the imported total covers however long the other counter was running, under whatever it treated as a view, while this plugin counts only from the day it was switched on and leaves out the bots it recognises. Added together they would mean nothing in particular.', 'shrikant-visitor-tracker' ); ?></p>
                     <p><?php esc_html_e( 'A reader sees the two added together, so no page appears to lose its history. The dashboard shows only what was actually tracked.', 'shrikant-visitor-tracker' ); ?></p>
                 </div>
                 <div class="sk-vt-note">
                     <span class="dashicons dashicons-yes-alt" aria-hidden="true"></span>
-                    <p><?php esc_html_e( 'Running an import twice is safe. Each post\'s figure is replaced, not added to.', 'shrikant-visitor-tracker' ); ?></p>
+                    <p><?php esc_html_e( 'Running an import twice is safe. Each post\'s figure is replaced, not added to. Nothing is changed or removed in the plugin the figures come from.', 'shrikant-visitor-tracker' ); ?></p>
                 </div>
+                <p class="sk-vt-disclaimer">
+                    <?php esc_html_e( 'The plugins named below are separate projects by their own authors. They are listed here only so their data can be read; this plugin is not affiliated with or endorsed by them.', 'shrikant-visitor-tracker' ); ?>
+                </p>
             </div>
 
             <?php foreach ( Shrikant_VT_Import::sources() as $key => $source ) :
@@ -1495,7 +1498,7 @@ final class Shrikant_VT_Admin {
         $rest     = rest_url( 'sk-vt/v1/' );
         $sections = [
             'counting'    => __( 'How a visit is counted', 'shrikant-visitor-tracker' ),
-            'differences' => __( 'Why these numbers are lower than your old plugin\'s', 'shrikant-visitor-tracker' ),
+            'differences' => __( 'Why this figure differs from another counter\'s', 'shrikant-visitor-tracker' ),
             'display'     => __( 'Showing the count to readers', 'shrikant-visitor-tracker' ),
             'migrating'   => __( 'Coming from another counter', 'shrikant-visitor-tracker' ),
             'privacy'     => __( 'What is stored about a visitor', 'shrikant-visitor-tracker' ),
@@ -1533,7 +1536,8 @@ final class Shrikant_VT_Admin {
                     <div class="sk-vt-card" id="sk-vt-differences" style="margin-bottom:16px">
                         <div class="sk-vt-card__head"><h2><?php echo esc_html( $sections['differences'] ); ?></h2></div>
                         <div class="sk-vt-prose">
-                            <p><?php esc_html_e( 'They usually are, by a lot, and the lower number is the more honest one. A PHP-based counter misses the cached readers and counts the crawlers that bypass the cache — and crawlers visit far more often than people do. This plugin filters known bots before recording anything.', 'shrikant-visitor-tracker' ); ?></p>
+                            <p><?php esc_html_e( 'Two counters almost never agree, and usually neither is broken. The figure here starts on the day this plugin was switched on, counts once per page view from the reader\'s browser, and leaves out the bots it recognises. Another tool may have been running for years, may count differently, and may or may not filter crawlers — so the totals measure different things over different spans.', 'shrikant-visitor-tracker' ); ?></p>
+                            <p><?php esc_html_e( 'Where a counter does its counting matters too. One that adds up in PHP while the page is built cannot see a reader served from a page cache, because PHP never runs for them; several counters, this one included, count from the browser instead to avoid that. If you are comparing two tools, it is worth checking which way each is configured before deciding one is wrong.', 'shrikant-visitor-tracker' ); ?></p>
                         </div>
                         <div class="sk-vt-note">
                             <span class="dashicons dashicons-search" aria-hidden="true"></span>

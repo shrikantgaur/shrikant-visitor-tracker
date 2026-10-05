@@ -16,16 +16,20 @@ defined( 'ABSPATH' ) || exit;
  * removed, so uninstalling it does not throw the history away.
  *
  * The counts are stored in post meta rather than in this plugin's own tables,
- * and that is deliberate. A count from Post Views Counter is not the same
- * measurement as a count from this plugin: that one increments in PHP, so it
- * misses every reader served from a page cache and counts the crawlers that
- * miss it. On the site this was written for it had logged 68,797 views where
- * this plugin had 12,485 — five times more, for a site whose Search Console
- * reported thirty-six clicks in the same period.
+ * and that is deliberate. An imported total is not the same measurement as
+ * one taken here: it covers however long the other counter was running, under
+ * whatever that counter treated as a view, while this plugin's own figure
+ * starts the day it was switched on and excludes the bots it recognises.
  *
- * Blending those numbers would make both meaningless. They are kept apart and
- * labelled, so a total can show "tracked" and "before tracking started" and a
- * reader of the dashboard can tell which is which.
+ * On the site this was written for, the imported total was 68,799 against
+ * 2,497 recorded here -- twenty-eight times larger, and no mystery: the
+ * imported figure spans years where this one begins in April 2026.
+ *
+ * Adding them would produce a number that means nothing in particular. They
+ * are kept apart and labelled, so a total can show "tracked" and "imported"
+ * and a reader of the dashboard can tell which is which.
+ *
+ * Nothing is written to or removed from the source plugin; its data is read.
  */
 final class Shrikant_VT_Import {
 

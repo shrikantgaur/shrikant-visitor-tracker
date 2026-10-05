@@ -64,9 +64,9 @@ final class Shrikant_VT_CLI {
      * Import historical view counts from another plugin before removing it.
      *
      * Counts are stored separately from this plugin's own tracking and are
-     * never added to it. The two are different measurements: a PHP-based
-     * counter misses every reader served from a page cache and counts the
-     * crawlers that miss it, so blending the figures would make both useless.
+     * never added to it. The two are different measurements: an imported
+     * total covers however long the other counter ran, under its own rules,
+     * so blending the figures would make both useless.
      *
      * Safe to run twice — each post's imported figure is replaced, not added
      * to, so a second run cannot double anybody's history.

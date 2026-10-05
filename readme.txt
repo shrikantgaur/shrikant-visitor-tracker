@@ -14,11 +14,13 @@ Self-hosted visitor analytics that still counts correctly behind a page cache. I
 
 Most view counters add up in PHP while the page is being built. On a site with a page cache that means the readers served from cache are never counted at all, while the crawlers that bypass the cache are counted every time — so the number drifts away from reality in both directions at once.
 
-This one counts from the browser, after the page has loaded, and filters known bots before recording anything. The figure it shows is usually much lower than the plugin it replaced, and much closer to what Search Console reports.
+This one counts from the browser, after the page has loaded, and filters known bots before recording anything. Expect its figures to sit closer to what Search Console reports than to a counter that has been accumulating for years under different rules.
 
 = Switching from another counter =
 
-Deleting a view counter normally throws its history away. The **Import** screen reads the totals out of Post Views Counter or WP-PostViews first, so you can remove them and keep the numbers. Imported counts are stored separately and never mixed into this plugin's own statistics — the two measure different things, and blending them would make both untrustworthy.
+Deleting a view counter normally throws its history away. The **Import** screen reads the totals out of Post Views Counter or WP-PostViews first, so you can remove them and keep the numbers. Nothing is altered in those plugins; their data is only read. Imported counts are stored separately and never mixed into this plugin's own statistics, because the two cover different spans under different rules and adding them would mean nothing in particular.
+
+Post Views Counter and WP-PostViews are separate projects by their own authors. They are named here only so their data can be read; this plugin is not affiliated with or endorsed by them.
 
 For the same reason, **deleting this plugin does not delete its data** unless you switch that on in Settings. Swapping one copy of a plugin for another goes through the same Delete button as saying goodbye to it.
 

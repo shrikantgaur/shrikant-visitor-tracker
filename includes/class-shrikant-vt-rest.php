@@ -390,6 +390,7 @@ final class Shrikant_VT_REST {
         header( 'Cache-Control: no-store, no-cache, must-revalidate' );
         header( 'Pragma: no-cache' );
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- php://output is a stream, not a file on disk; WP_Filesystem cannot write to it, and fputcsv is the only thing that quotes CSV fields correctly.
         $out = fopen( 'php://output', 'w' );
         if ( ! is_resource( $out ) ) {
             return new WP_REST_Response( [ 'error' => 'Could not open output stream.' ], 500 );
@@ -399,6 +400,7 @@ final class Shrikant_VT_REST {
         foreach ( $rows as $row ) {
             fputcsv( $out, array_values( $row ) );
         }
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- closes the stream opened above, which is memory, not the filesystem.
         fclose( $out );
         exit; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
     }

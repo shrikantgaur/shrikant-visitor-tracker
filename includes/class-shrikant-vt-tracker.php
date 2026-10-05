@@ -346,10 +346,10 @@ final class Shrikant_VT_Tracker {
             return [ 'direct', '' ];
         }
 
-        $host = strtolower( (string) parse_url( $referrer, PHP_URL_HOST ) );
+        $host = strtolower( (string) wp_parse_url( $referrer, PHP_URL_HOST ) );
 
         // Self-referrals → direct.
-        $site_host = strtolower( (string) parse_url( home_url(), PHP_URL_HOST ) );
+        $site_host = strtolower( (string) wp_parse_url( home_url(), PHP_URL_HOST ) );
         if ( $host === $site_host || str_ends_with( $host, '.' . $site_host ) ) {
             return [ 'direct', '' ];
         }

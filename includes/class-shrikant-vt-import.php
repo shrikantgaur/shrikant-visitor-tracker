@@ -129,6 +129,21 @@ final class Shrikant_VT_Import {
 			$table = $wpdb->prefix . $config['table'];
 
 			/*
+			 * Column names cannot be passed through $wpdb->prepare(), so they
+			 * are checked against the shape a column name is allowed to take
+			 * before being interpolated. The values come from the hardcoded
+			 * list in sources() and nothing reaches this from a request, but
+			 * a table-name or column-name interpolation is worth proving safe
+			 * rather than arguing is safe.
+			 */
+			$id_col    = preg_replace( '/[^A-Za-z0-9_]/', '', (string) $config['id_col'] );
+			$count_col = preg_replace( '/[^A-Za-z0-9_]/', '', (string) $config['count_col'] );
+
+			if ( '' === $id_col || '' === $count_col ) {
+				return array();
+			}
+
+			/*
 			 * Post Views Counter keeps the same views five times over: type 0
 			 * daily, 1 weekly, 2 monthly, 3 yearly and 4 all-time. Summing the
 			 * table counts every view four or five times -- on the site this
@@ -136,8 +151,8 @@ final class Shrikant_VT_Import {
 			 * all-time rows said 68,797. Only type 4 is read.
 			 */
 			$rows = $wpdb->get_results(
-				"SELECT {$config['id_col']} AS id, {$config['count_col']} AS total
-				   FROM {$table} WHERE type = 4"
+				// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- identifiers are validated above; values are literal.
+				"SELECT `{$id_col}` AS id, `{$count_col}` AS total FROM `{$table}` WHERE type = 4"
 			);
 
 			// Older versions of the plugin did not write a type 4 row. Fall
@@ -145,8 +160,8 @@ final class Shrikant_VT_Import {
 			// once rather than four times.
 			if ( ! $rows ) {
 				$rows = $wpdb->get_results(
-					"SELECT {$config['id_col']} AS id, SUM({$config['count_col']}) AS total
-					   FROM {$table} WHERE type = 3 GROUP BY {$config['id_col']}"
+					// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- identifiers are validated above; values are literal.
+					"SELECT `{$id_col}` AS id, SUM(`{$count_col}`) AS total FROM `{$table}` WHERE type = 3 GROUP BY `{$id_col}`"
 				);
 			}
 		}

@@ -433,6 +433,7 @@ final class Shrikant_VT_CLI {
             return '';
         }
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fopen -- php://temp is a stream, not a file on disk; WP_Filesystem cannot write to it, and fputcsv is the only thing that quotes CSV fields correctly.
         $buffer = fopen( 'php://temp', 'r+' );
         if ( ! is_resource( $buffer ) ) {
             return '';
@@ -445,6 +446,7 @@ final class Shrikant_VT_CLI {
 
         rewind( $buffer );
         $csv = stream_get_contents( $buffer );
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- closes the stream opened above, which is memory, not the filesystem.
         fclose( $buffer );
 
         return is_string( $csv ) ? $csv : '';

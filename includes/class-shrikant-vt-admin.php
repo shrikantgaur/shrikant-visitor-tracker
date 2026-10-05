@@ -88,7 +88,8 @@ final class Shrikant_VT_Admin {
             <div class="sk-vt-dw-card">
                 <h4><?php echo esc_html( $c['h'] ); ?></h4>
                 <div class="sk-vt-dw-num"><?php echo esc_html( number_format_i18n( $c['pv'] ) ); ?></div>
-                <div class="sk-vt-dw-sub"><?php printf( esc_html__( '%s unique', 'shrikant-visitor-tracker' ), esc_html( number_format_i18n( $c['uv'] ) ) ); ?></div>
+                <div class="sk-vt-dw-sub"><?php /* translators: %s: number of unique visitors. */
+						printf( esc_html__( '%s unique', 'shrikant-visitor-tracker' ), esc_html( number_format_i18n( $c['uv'] ) ) ); ?></div>
             </div>
             <?php endforeach; ?>
             <div class="sk-vt-dw-card sk-vt-dw-online">
@@ -260,7 +261,8 @@ final class Shrikant_VT_Admin {
                 <h3><?php echo esc_html( $card['label'] ); ?></h3>
                 <div class="sk-vt-stat-num"><?php echo esc_html( number_format_i18n( $card['data']['pageviews'] ) ); ?></div>
                 <div class="sk-vt-stat-sub">
-                    <?php printf( esc_html__( '%s unique visitors', 'shrikant-visitor-tracker' ), esc_html( number_format_i18n( $card['data']['unique_visitors'] ) ) ); ?>
+                    <?php /* translators: %s: number of unique visitors. */
+						printf( esc_html__( '%s unique visitors', 'shrikant-visitor-tracker' ), esc_html( number_format_i18n( $card['data']['unique_visitors'] ) ) ); ?>
                 </div>
             </div>
             <?php endforeach; ?>
@@ -350,7 +352,8 @@ final class Shrikant_VT_Admin {
             <?php $this->period_switcher( 'shrikant-visitor-tracker-pages', $days ); ?>
             <div class="sk-vt-card" style="margin-top:1rem">
                 <h2 style="display:flex;justify-content:space-between;align-items:center">
-                    <span><?php printf( esc_html__( 'Top 50 Pages — Last %d Days', 'shrikant-visitor-tracker' ), esc_html( (string) $days ) ); ?></span>
+                    <span><?php /* translators: %d: number of days in the reporting period. */
+						printf( esc_html__( 'Top 50 Pages — Last %d Days', 'shrikant-visitor-tracker' ), esc_html( (string) $days ) ); ?></span>
                     <a href="<?php echo esc_url( rest_url( 'sk-vt/v1/export?from=' . gmdate( 'Y-m-d', strtotime( "-{$days} days" ) ) . '&to=' . gmdate( 'Y-m-d' ) ) ); ?>"
                        class="button" download>
                         ⬇ <?php esc_html_e( 'Export CSV', 'shrikant-visitor-tracker' ); ?>

@@ -2,7 +2,7 @@
 Contributors: shrikantgaur
 Tags: analytics, visitors, statistics, privacy, gdpr
 Requires at least: 6.3
-Tested up to: 7.1
+Tested up to: 6.9
 Stable tag: 1.0.0
 Requires PHP: 8.2
 License: GPLv2 or later
@@ -26,24 +26,36 @@ For the same reason, **deleting this plugin does not delete its data** unless yo
 
 = Everything else =
 
-Shrikant Visitor Tracker gives you complete control over your visitor analytics data — everything is stored in your own database, nothing leaves your server (except a geo-IP lookup to the free ip-api.com API, which is cached for ≥24 hours).
+Shrikant Visitor Tracker gives you complete control over your visitor analytics data — everything is stored in your own database, nothing leaves your server (except a geo-IP lookup to the free ipwho.is API, which is cached for at least 24 hours).
 
 = Key Features =
 
 * **Total / daily / weekly / monthly / yearly visitors** with page-level tracking
 * **Device, browser, and OS detection** via lightweight User-Agent parsing (no library)
 * **Referrer categorisation** (direct, search, social, other) + full **UTM parameter tracking**
-* **Country detection** via ip-api.com (free, no API key, IP anonymised before sending, cached ≥24h)
+* **Country detection** via ipwho.is (free, no API key, IP anonymised before it is sent, cached for at least 24h)
 * **Real-time "currently online" counter** using WordPress transients
 * **Counts correctly behind a page cache** — a non-blocking browser beacon, not a PHP counter, so WP Rocket, LiteSpeed, W3 Total Cache and Cloudflare do not hide your readers
-* **Pre-aggregated summary table** — hourly WP-Cron job keeps dashboard queries fast regardless of traffic volume
-* **Advanced bot filtering** — UA string matching + WordPress native `wp_is_bot()` + proxy headers
+* **Pre-aggregated summary table** — every report is built from hourly summaries, so a report stays fast whatever the traffic, and the summaries are kept for good
+* **Bot filtering** — user-agent matching against a maintained list, plus proxy and prefetch headers, before anything is recorded
 * **Privacy-first** — IP anonymisation, DNT header respect, cookie consent hook, GDPR data export/erasure
 * **REST API** — full stats API under `/wp-json/sk-vt/v1/` for headless or custom integrations
 * **WP-CLI commands** — `wp sk-vt stats today`, `wp sk-vt export`, `wp sk-vt cleanup --dry-run`, and more
 * **Import from Post Views Counter or WP-PostViews** — switch without losing the history
-* **Your data survives uninstall** by default
+* **Any date range** — the usual 7/30/90-day presets, or two dates of your own
+* **Searchable, sortable, paginated reports** with CSV export
+* **Choose where the count appears** — a checkbox per public post type, not just posts
+* **Nothing is ever deleted** unless you ask for it — not on uninstall, not on a schedule
 * **Zero paid dependencies** — 100% free and open source, nothing loaded from a CDN
+
+= Third-party code =
+
+This plugin bundles Chart.js 4.4.1 (https://www.chartjs.org), used to draw the
+dashboard charts. Chart.js is released under the MIT licence, which is
+compatible with the GPL, and its source is at https://github.com/chartjs/Chart.js.
+It is bundled rather than loaded from a CDN because a plugin in this directory
+may not load code from elsewhere at run time. Nothing else is bundled, and no
+other third-party code is loaded.
 
 = Privacy & GDPR =
 
@@ -74,7 +86,7 @@ Shrikant Visitor Tracker gives you complete control over your visitor analytics 
 
 = Does this plugin share data with third parties? =
 
-Only for country detection: if geo lookup is enabled, the anonymised IP address (last octet zeroed) is sent to ip-api.com's free API. The result is cached for at least 24 hours. All other data stays on your server.
+Only for country detection: if geo lookup is enabled, the anonymised IP address (last octet zeroed) is sent over https to ipwho.is (https://ipwho.is), whose terms are at https://ipwho.is/terms and privacy policy at https://ipwho.is/privacy. Nothing else about the visitor is sent, and turning Country Detection off in Settings stops it entirely. The result is cached for at least 24 hours. All other data stays on your server.
 
 = Is this compatible with caching plugins? =
 

@@ -8,21 +8,31 @@ Requires PHP: 8.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Self-hosted visitor analytics that still counts correctly behind a page cache. Import from your old counter without losing its history.
+Visitor analytics that counts correctly behind a page cache, and imports your old view counter's history instead of throwing it away.
 
 == Description ==
+
+Most analytics plugins assume you are starting from nothing. This one assumes you are not.
+
+= Switching counters without losing the history =
+
+If you run Post Views Counter or WP-PostViews, deleting it throws away every number it ever recorded. The **Import** screen reads those totals across first — reading only, never writing to or removing anything in them — so you can switch and keep the figures.
+
+Imported counts are then kept **separate and labelled, never merged** into this plugin's own statistics. The two measure different things: one spans years under its own rules, the other starts the day you switch this on and leaves out the bots it recognises. Adding them together would produce a number that means nothing in particular. So a reader sees the two added up and no post appears to lose its history, while the dashboard shows only what was actually tracked and stays comparable with itself.
+
+Post Views Counter and WP-PostViews are separate projects by their own authors. They are named here only so their data can be read; this plugin is not affiliated with or endorsed by them.
+
+= Nothing is deleted unless you ask =
+
+**Deleting this plugin does not delete its data**, unless you switch that on in Settings. Replacing a hand-installed copy with the directory one goes through the same Delete button as saying goodbye to it, and that should not cost you six months of history.
+
+The hourly summaries every report is built from are never deleted at all, by anything. Individual visit rows are kept for good too, unless you choose a retention period yourself.
+
+= Why these numbers are lower than your old counter's =
 
 Most view counters add up in PHP while the page is being built. On a site with a page cache that means the readers served from cache are never counted at all, while the crawlers that bypass the cache are counted every time — so the number drifts away from reality in both directions at once.
 
 This one counts from the browser, after the page has loaded, and filters known bots before recording anything. Expect its figures to sit closer to what Search Console reports than to a counter that has been accumulating for years under different rules.
-
-= Switching from another counter =
-
-Deleting a view counter normally throws its history away. The **Import** screen reads the totals out of Post Views Counter or WP-PostViews first, so you can remove them and keep the numbers. Nothing is altered in those plugins; their data is only read. Imported counts are stored separately and never mixed into this plugin's own statistics, because the two cover different spans under different rules and adding them would mean nothing in particular.
-
-Post Views Counter and WP-PostViews are separate projects by their own authors. They are named here only so their data can be read; this plugin is not affiliated with or endorsed by them.
-
-For the same reason, **deleting this plugin does not delete its data** unless you switch that on in Settings. Swapping one copy of a plugin for another goes through the same Delete button as saying goodbye to it.
 
 = Everything else =
 

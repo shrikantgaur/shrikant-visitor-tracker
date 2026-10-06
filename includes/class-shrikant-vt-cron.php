@@ -80,6 +80,145 @@ final class Shrikant_VT_Cron {
      *   referrer_type→ 'referrer_type': e.g. 'search'
      *   browser      → 'browser'    : e.g. 'Chrome'
      */
+    /**
+     * Throw the summaries away and build them again from the raw rows.
+     *
+     * The aggregation adds to the counts it finds, so running it twice over
+     * the same rows counts them twice. That cannot happen on its own -- it
+     * only ever reads ids above the last one it handled -- but it does happen
+     * if that marker is moved back, a database is restored to an older copy,
+     * or two runs overlap. This is the way back from that.
+     *
+     * Never automatic, and it refuses when the raw rows no longer reach as far
+     * back as the summaries do: rebuilding from an incomplete source would
+     * replace real history with a shorter version of it.
+     *
+     * @return array{rebuilt:bool,reason:string,rows:int}
+     */
+    public function rebuild_summaries(): array {
+        global $wpdb;
+
+        $raw_table = Shrikant_VT_DB::raw_table();
+        $sum_table = Shrikant_VT_DB::sum_table();
+
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table names come from Shrikant_VT_DB; no value here comes from input.
+        $raw_earliest = (string) $wpdb->get_var( "SELECT MIN(visit_time) FROM {$raw_table}" );
+        $sum_earliest = (string) $wpdb->get_var( "SELECT MIN(period_start) FROM {$sum_table}" );
+
+        if ( '' === $raw_earliest ) {
+            return [ 'rebuilt' => false, 'reason' => 'no-raw-rows', 'rows' => 0 ];
+        }
+
+        if ( '' !== $sum_earliest && substr( $sum_earliest, 0, 10 ) < substr( $raw_earliest, 0, 10 ) ) {
+            return [ 'rebuilt' => false, 'reason' => 'summaries-reach-further-back', 'rows' => 0 ];
+        }
+
+        $wpdb->query( "DELETE FROM {$sum_table}" );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
+
+        update_option( 'sk_vt_last_agg_id', 0, false );
+
+        // One batch at a time, the way the hourly job does it.
+        $guard = 0;
+        while ( $this->catch_up() && ++$guard < 1000 ) {
+            continue;
+        }
+
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB.
+        $rows = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$sum_table}" );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
+
+        return [ 'rebuilt' => true, 'reason' => 'ok', 'rows' => $rows ];
+    }
+
+    /**
+     * Fill in a dimension that was not being aggregated before.
+     *
+     * Adds rows for one dimension across every raw visit still on disk. It
+     * only ever inserts a dimension_key that is absent, so it cannot double
+     * anything that is already there -- the usual aggregation adds to the
+     * counts it finds, which is exactly what must not happen here.
+     *
+     * Where the raw rows are gone, that history simply is not available. The
+     * alternative -- rebuilding the whole summary table -- would delete the
+     * history of anyone who had ever switched retention on.
+     *
+     * @param string $dimension Column in the raw table, also the dimension key.
+     * @return int Rows written.
+     */
+    public function backfill_dimension( string $dimension ): int {
+        global $wpdb;
+
+        $allowed = [ 'os', 'browser', 'device_type', 'country_code', 'referrer_type' ];
+        if ( ! in_array( $dimension, $allowed, true ) ) {
+            return 0;
+        }
+
+        $raw_table = Shrikant_VT_DB::raw_table();
+        $sum_table = Shrikant_VT_DB::sum_table();
+
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table names come from Shrikant_VT_DB and the dimension is checked against the list above, never taken from input.
+        $existing = (int) $wpdb->get_var(
+            $wpdb->prepare( "SELECT COUNT(*) FROM {$sum_table} WHERE dimension_key = %s", $dimension )
+        );
+
+        if ( $existing > 0 ) {
+            return 0; // Already present; adding more would double it.
+        }
+
+        $written = (int) $wpdb->query(
+            $wpdb->prepare(
+                "INSERT INTO {$sum_table}
+                 (period_type, period_start, page_id, dimension_key, dimension_val, pageviews, unique_visitors)
+                 SELECT 'hour',
+                        DATE_FORMAT(visit_time, '%%Y-%%m-%%d %%H:00:00'),
+                        page_id,
+                        %s,
+                        {$dimension},
+                        COUNT(*),
+                        SUM(is_unique)
+                 FROM {$raw_table}
+                 GROUP BY DATE_FORMAT(visit_time, '%%Y-%%m-%%d %%H:00:00'), page_id, {$dimension}",
+                $dimension
+            )
+        );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
+
+        return $written;
+    }
+
+    /**
+     * Aggregate anything the hourly job has not reached yet.
+     *
+     * The reports read summaries, so a visit is invisible until it has been
+     * rolled up. Waiting for the next hourly run would mean opening the
+     * dashboard after a page view and not seeing it, which reads as the
+     * plugin being broken. Called when an admin opens a report, where one
+     * extra query on a handful of rows costs nothing.
+     *
+     * @return bool Whether anything was aggregated.
+     */
+    public function catch_up(): bool {
+        global $wpdb;
+
+        $raw_table = Shrikant_VT_DB::raw_table();
+        $last_id   = (int) get_option( 'sk_vt_last_agg_id', 0 );
+
+        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB; the value is a placeholder.
+        $behind = (int) $wpdb->get_var(
+            $wpdb->prepare( "SELECT COUNT(*) FROM {$raw_table} WHERE id > %d", $last_id )
+        );
+        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
+
+        if ( $behind < 1 ) {
+            return false;
+        }
+
+        $this->run_aggregation();
+
+        return true;
+    }
+
     public function run_aggregation(): void {
         global $wpdb;
 
@@ -124,6 +263,7 @@ final class Shrikant_VT_Cron {
             [ 'country_code',  'country_code',   'country_code' ],
             [ 'referrer_type', 'referrer_type',  'referrer_type' ],
             [ 'browser',       'browser',        'browser' ],
+            [ 'os',            'os',             'os' ],
         ];
 
         foreach ( $dimensions as [ $dim_key, $group_col, $val_col ] ) {
@@ -217,9 +357,19 @@ final class Shrikant_VT_Cron {
         global $wpdb;
 
         $retention_days = $this->settings->retention_days();
-        $cutoff         = gmdate( 'Y-m-d', strtotime( "-{$retention_days} days" ) );
-        $raw_table      = Shrikant_VT_DB::raw_table();
-        $sum_table      = Shrikant_VT_DB::sum_table();
+
+        /*
+         * Zero means keep everything, which is the default. Deleting visits
+         * is housekeeping for a site that wants it, not something that should
+         * happen to anybody who never asked.
+         */
+        if ( $retention_days < 1 ) {
+            do_action( 'shrikant_vt_after_cleanup', '' );
+            return;
+        }
+
+        $cutoff    = gmdate( 'Y-m-d', strtotime( "-{$retention_days} days" ) );
+        $raw_table = Shrikant_VT_DB::raw_table();
 
         do {
             // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table names come from Shrikant_VT_DB and the dimension columns from the literal map above, never from input; every value is a placeholder.
@@ -236,16 +386,13 @@ final class Shrikant_VT_Cron {
             }
         } while ( $deleted === 1000 );
 
-        // Purge summary buckets beyond 2× retention.
-        $sum_cutoff = gmdate( 'Y-m-d H:i:s', strtotime( '-' . ( $retention_days * 2 ) . ' days' ) );
-        // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table names come from Shrikant_VT_DB and the dimension columns from the literal map above, never from input; every value is a placeholder.
-        $wpdb->query(
-            $wpdb->prepare(
-                "DELETE FROM {$sum_table} WHERE period_start < %s LIMIT 5000",
-                $sum_cutoff
-            )
-        );
-        // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
+        /*
+         * The summaries are deliberately left alone, for good. They are what
+         * every report reads and they are small -- a handful of rows per page
+         * per hour, against one row per page view. Clearing them at twice the
+         * retention period, which is what used to happen here, did not tidy
+         * anything up: it deleted the history the reports are made of.
+         */
 
         /**
          * Action: shrikant_vt_after_cleanup

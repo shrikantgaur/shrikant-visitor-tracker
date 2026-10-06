@@ -55,8 +55,20 @@ final class Shrikant_VT_Settings {
     }
 
     /** Number of days to keep raw rows before cron cleanup. */
+    /**
+     * Days to keep individual visit rows, or 0 to keep them for good.
+     *
+     * Anything between 1 and 29 is treated as 30: a shorter window than that
+     * is almost always a mistyped setting rather than an intention.
+     */
     public function retention_days(): int {
-        return max( 30, (int) $this->data['retention_days'] );
+        $days = (int) $this->data['retention_days'];
+
+        if ( $days < 1 ) {
+            return 0;
+        }
+
+        return max( 30, $days );
     }
 
     /** Inactivity window in seconds for "currently online" counter. */
@@ -161,7 +173,12 @@ final class Shrikant_VT_Settings {
             'tracking_enabled'  => true,
             'ip_anonymization'  => true,   // Recommended for GDPR.
             'respect_dnt'       => true,
-            'retention_days'    => 365,
+            /*
+             * Zero means never delete, and that is the default. These rows are
+             * the record of real visits; throwing them away should be a choice
+             * somebody makes, not one they inherit.
+             */
+            'retention_days'    => 0,
             'online_ttl'        => 300,    // 5 minutes.
             'track_admins'      => false,
             'async_tracking'    => true,
@@ -201,7 +218,7 @@ final class Shrikant_VT_Settings {
             'tracking_enabled'  => ! empty( $input['tracking_enabled'] ),
             'ip_anonymization'  => ! empty( $input['ip_anonymization'] ),
             'respect_dnt'       => ! empty( $input['respect_dnt'] ),
-            'retention_days'    => absint( $input['retention_days'] ?? 365 ),
+            'retention_days'    => absint( $input['retention_days'] ?? 0 ),
             'online_ttl'        => absint( $input['online_ttl'] ?? 300 ),
             'track_admins'      => ! empty( $input['track_admins'] ),
             'async_tracking'    => ! empty( $input['async_tracking'] ),

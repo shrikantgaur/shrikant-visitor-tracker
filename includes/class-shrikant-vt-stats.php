@@ -52,20 +52,22 @@ final class Shrikant_VT_Stats {
             return $cached;
         }
 
-        $table = Shrikant_VT_DB::raw_table();
+        $table = Shrikant_VT_DB::sum_table();
 
         $sql = $page_id !== null
             // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
             ? $wpdb->prepare(
-                "SELECT COUNT(*) AS pageviews, SUM(is_unique) AS unique_visitors
+                "SELECT SUM(pageviews) AS pageviews, SUM(unique_visitors) AS unique_visitors
                  FROM {$table}
-                 WHERE visit_date BETWEEN %s AND %s AND page_id = %d",
+                 WHERE dimension_key = 'total'
+                   AND DATE(period_start) BETWEEN %s AND %s AND page_id = %d",
                 $from, $to, $page_id
             )
             : $wpdb->prepare(
-                "SELECT COUNT(*) AS pageviews, SUM(is_unique) AS unique_visitors
+                "SELECT SUM(pageviews) AS pageviews, SUM(unique_visitors) AS unique_visitors
                  FROM {$table}
-                 WHERE visit_date BETWEEN %s AND %s",
+                 WHERE dimension_key = 'total'
+                   AND DATE(period_start) BETWEEN %s AND %s",
                 $from, $to
             );
             // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
@@ -171,18 +173,19 @@ final class Shrikant_VT_Stats {
             return $cached;
         }
 
-        $table = Shrikant_VT_DB::raw_table();
+        $table = Shrikant_VT_DB::sum_table();
         [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
-            "SELECT visit_date AS date,
-                    COUNT(*)          AS pageviews,
-                    SUM(is_unique)    AS unique_visitors
+            "SELECT DATE(period_start)     AS date,
+                    SUM(pageviews)         AS pageviews,
+                    SUM(unique_visitors)   AS unique_visitors
              FROM {$table}
-             WHERE visit_date BETWEEN %s AND %s
-             GROUP BY visit_date
-             ORDER BY visit_date ASC",
+             WHERE dimension_key = 'total'
+               AND DATE(period_start) BETWEEN %s AND %s
+             GROUP BY DATE(period_start)
+             ORDER BY date ASC",
             $from, $to
         );
         // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
@@ -215,16 +218,16 @@ final class Shrikant_VT_Stats {
             return $cached;
         }
 
-        $table = Shrikant_VT_DB::raw_table();
+        $table = Shrikant_VT_DB::sum_table();
         $today = gmdate( 'Y-m-d' );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
-            "SELECT visit_hour AS hour, COUNT(*) AS pageviews
+            "SELECT HOUR(period_start) AS hour, SUM(pageviews) AS pageviews
              FROM {$table}
-             WHERE visit_date = %s
-             GROUP BY visit_hour
-             ORDER BY visit_hour ASC",
+             WHERE dimension_key = 'total' AND DATE(period_start) = %s
+             GROUP BY HOUR(period_start)
+             ORDER BY hour ASC",
             $today
         );
         // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
@@ -259,16 +262,17 @@ final class Shrikant_VT_Stats {
             return $cached;
         }
 
-        $table = Shrikant_VT_DB::raw_table();
+        $table = Shrikant_VT_DB::sum_table();
         [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
             "SELECT page_id,
-                    COUNT(*)       AS pageviews,
-                    SUM(is_unique) AS unique_visitors
+                    SUM(pageviews)       AS pageviews,
+                    SUM(unique_visitors) AS unique_visitors
              FROM {$table}
-             WHERE visit_date BETWEEN %s AND %s
+             WHERE dimension_key = 'total'
+               AND DATE(period_start) BETWEEN %s AND %s
              GROUP BY page_id
              ORDER BY pageviews DESC
              LIMIT %d",
@@ -314,15 +318,17 @@ final class Shrikant_VT_Stats {
             return $cached;
         }
 
-        $table = Shrikant_VT_DB::raw_table();
+        $table = Shrikant_VT_DB::sum_table();
         [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
-            "SELECT referrer_type, COUNT(*) AS cnt
+            "SELECT dimension_val AS referrer_type, SUM(pageviews) AS cnt
              FROM {$table}
-             WHERE visit_date BETWEEN %s AND %s
-             GROUP BY referrer_type",
+             WHERE dimension_key = 'referrer_type'
+               AND DATE(period_start) BETWEEN %s AND %s
+             GROUP BY dimension_val
+             ORDER BY cnt DESC",
             $from, $to
         );
         // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
@@ -357,15 +363,17 @@ final class Shrikant_VT_Stats {
             return $cached;
         }
 
-        $table = Shrikant_VT_DB::raw_table();
+        $table = Shrikant_VT_DB::sum_table();
         [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
-            "SELECT country_code, COUNT(*) AS pageviews
+            "SELECT dimension_val AS country_code, SUM(pageviews) AS pageviews
              FROM {$table}
-             WHERE visit_date BETWEEN %s AND %s AND country_code != 'XX'
-             GROUP BY country_code
+             WHERE dimension_key = 'country_code'
+               AND DATE(period_start) BETWEEN %s AND %s
+               AND dimension_val != 'XX'
+             GROUP BY dimension_val
              ORDER BY pageviews DESC
              LIMIT %d",
             $from, $to, $limit
@@ -401,15 +409,17 @@ final class Shrikant_VT_Stats {
             return $cached;
         }
 
-        $table = Shrikant_VT_DB::raw_table();
+        $table = Shrikant_VT_DB::sum_table();
         [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
-            "SELECT device_type, COUNT(*) AS cnt
+            "SELECT dimension_val AS device_type, SUM(pageviews) AS cnt
              FROM {$table}
-             WHERE visit_date BETWEEN %s AND %s
-             GROUP BY device_type",
+             WHERE dimension_key = 'device_type'
+               AND DATE(period_start) BETWEEN %s AND %s
+             GROUP BY dimension_val
+             ORDER BY cnt DESC",
             $from, $to
         );
         // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
@@ -444,18 +454,19 @@ final class Shrikant_VT_Stats {
             return $cached;
         }
 
-        $table = Shrikant_VT_DB::raw_table();
+        $table = Shrikant_VT_DB::sum_table();
         [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
-            "SELECT visit_date AS date,
-                    COUNT(*)          AS pageviews,
-                    SUM(is_unique)    AS unique_visitors
+            "SELECT DATE(period_start)     AS date,
+                    SUM(pageviews)         AS pageviews,
+                    SUM(unique_visitors)   AS unique_visitors
              FROM {$table}
-             WHERE visit_date BETWEEN %s AND %s AND page_id = %d
-             GROUP BY visit_date
-             ORDER BY visit_date ASC",
+             WHERE dimension_key = 'total'
+               AND DATE(period_start) BETWEEN %s AND %s AND page_id = %d
+             GROUP BY DATE(period_start)
+             ORDER BY date ASC",
             $from, $to, $page_id
         );
         // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
@@ -491,15 +502,16 @@ final class Shrikant_VT_Stats {
             return $cached;
         }
 
-        $table = Shrikant_VT_DB::raw_table();
+        $table = Shrikant_VT_DB::sum_table();
         [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
-            "SELECT browser, COUNT(*) AS cnt
+            "SELECT dimension_val AS browser, SUM(pageviews) AS cnt
              FROM {$table}
-             WHERE visit_date BETWEEN %s AND %s
-             GROUP BY browser
+             WHERE dimension_key = 'browser'
+               AND DATE(period_start) BETWEEN %s AND %s
+             GROUP BY dimension_val
              ORDER BY cnt DESC",
             $from, $to
         );
@@ -534,15 +546,16 @@ final class Shrikant_VT_Stats {
             return $cached;
         }
 
-        $table = Shrikant_VT_DB::raw_table();
+        $table = Shrikant_VT_DB::sum_table();
         [ $from, $to ] = $this->resolve_window( $days, $window );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $sql = $wpdb->prepare(
-            "SELECT os, COUNT(*) AS cnt
+            "SELECT dimension_val AS os, SUM(pageviews) AS cnt
              FROM {$table}
-             WHERE visit_date BETWEEN %s AND %s
-             GROUP BY os
+             WHERE dimension_key = 'os'
+               AND DATE(period_start) BETWEEN %s AND %s
+             GROUP BY dimension_val
              ORDER BY cnt DESC",
             $from, $to
         );
@@ -660,15 +673,16 @@ final class Shrikant_VT_Stats {
             return $cached;
         }
 
-        $table = Shrikant_VT_DB::raw_table();
+        $table = Shrikant_VT_DB::sum_table();
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB, never from input; every value is a placeholder, and reports read the plugin's own tables by design.
         $row = $wpdb->get_row(
-            "SELECT COUNT(*) AS pageviews,
-                    SUM(is_unique) AS unique_visitors,
-                    MIN(visit_date) AS first_visit,
-                    MAX(visit_date) AS last_visit
-             FROM {$table}",
+            "SELECT SUM(pageviews)           AS pageviews,
+                    SUM(unique_visitors)     AS unique_visitors,
+                    DATE(MIN(period_start))  AS first_visit,
+                    DATE(MAX(period_start))  AS last_visit
+             FROM {$table}
+             WHERE dimension_key = 'total'",
             ARRAY_A
         );
         // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB

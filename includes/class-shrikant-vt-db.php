@@ -31,7 +31,7 @@ defined( 'ABSPATH' ) || exit;
 final class Shrikant_VT_DB {
 
     // DB schema version — bump to trigger dbDelta re-run on next upgrade.
-    private const SCHEMA_VERSION = '1.0.0';
+    private const SCHEMA_VERSION = '1.1.0';
     private const OPTION_KEY     = 'sk_vt_db_version';
 
     /**
@@ -50,6 +50,17 @@ final class Shrikant_VT_DB {
             return; // Already up-to-date.
         }
         $this->create_tables();
+
+        /*
+         * Reports read the summaries now, and the operating system was never
+         * among the dimensions being summarised. Fill it in from the raw rows
+         * that are still here, once.
+         */
+        $cron = Shrikant_Visitor_Tracker::get_instance()->get( 'cron' );
+        if ( $cron instanceof Shrikant_VT_Cron ) {
+            $cron->backfill_dimension( 'os' );
+        }
+
         update_option( self::OPTION_KEY, self::SCHEMA_VERSION, false );
     }
 

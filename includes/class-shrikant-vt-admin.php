@@ -222,6 +222,8 @@ final class Shrikant_VT_Admin {
      * @return array{custom:bool,days:int,from:string,to:string,label:string}
      */
     private function selected_window(): array {
+        $this->catch_up_once();
+
         $today = gmdate( 'Y-m-d' );
 
         // phpcs:disable WordPress.Security.NonceVerification.Recommended -- the dates for a read-only report, read out of the URL. They change nothing, so there is no form submission to tie a nonce to; each is accepted only if it is a real calendar date in Y-m-d.
@@ -273,6 +275,26 @@ final class Shrikant_VT_Admin {
                 number_format_i18n( $days )
             ),
         ];
+    }
+
+    /**
+     * Roll up anything the hourly job has not reached, before a report reads
+     * the summaries it is about to render. Once per request, whatever number
+     * of reports ask for the window.
+     */
+    private function catch_up_once(): void {
+        static $done = false;
+
+        if ( $done ) {
+            return;
+        }
+
+        $done = true;
+        $cron = Shrikant_Visitor_Tracker::get_instance()->get( 'cron' );
+
+        if ( $cron instanceof Shrikant_VT_Cron ) {
+            $cron->catch_up();
+        }
     }
 
     /**
@@ -1360,18 +1382,16 @@ final class Shrikant_VT_Admin {
 
                     <fieldset class="sk-vt-card sk-vt-fieldset">
                         <legend><?php esc_html_e( 'Data', 'shrikant-visitor-tracker' ); ?></legend>
-                        <p class="sk-vt-fieldset__sub"><?php esc_html_e( 'Individual visits are rolled up into hourly summaries every hour. The summaries are what the reports read, and they are never deleted.', 'shrikant-visitor-tracker' ); ?></p>
+                        <p class="sk-vt-fieldset__sub"><?php esc_html_e( 'Individual visits are rolled up into hourly summaries. Every report reads those summaries, and they are kept for good.', 'shrikant-visitor-tracker' ); ?></p>
 
                         <div class="sk-vt-field">
-                            <label class="sk-vt-field__name" for="sk-vt-retention"><?php esc_html_e( 'Keep individual visits for', 'shrikant-visitor-tracker' ); ?></label>
+                            <label class="sk-vt-field__name" for="sk-vt-retention"><?php esc_html_e( 'Keep individual visit rows', 'shrikant-visitor-tracker' ); ?></label>
                             <select name="retention_days" id="sk-vt-retention">
                                 <?php
                                 $retention = [
-                                    30  => __( '30 days', 'shrikant-visitor-tracker' ),
-                                    90  => __( '90 days', 'shrikant-visitor-tracker' ),
-                                    180 => __( '6 months', 'shrikant-visitor-tracker' ),
-                                    365 => __( '1 year', 'shrikant-visitor-tracker' ),
-                                    730 => __( '2 years', 'shrikant-visitor-tracker' ),
+                                    0   => __( 'Forever — never delete anything', 'shrikant-visitor-tracker' ),
+                                    365 => __( 'Delete rows older than 1 year', 'shrikant-visitor-tracker' ),
+                                    730 => __( 'Delete rows older than 2 years', 'shrikant-visitor-tracker' ),
                                 ];
                                 foreach ( $retention as $value => $label ) : ?>
                                     <option value="<?php echo esc_attr( (string) $value ); ?>" <?php selected( $this->settings->retention_days(), $value ); ?>>
@@ -1379,7 +1399,19 @@ final class Shrikant_VT_Admin {
                                     </option>
                                 <?php endforeach; ?>
                             </select>
-                            <p class="sk-vt-field__desc"><?php esc_html_e( 'Rows older than this are cleared each night. Your totals and charts are unaffected, because they read the summaries — only the ability to drill into a single old day is lost.', 'shrikant-visitor-tracker' ); ?></p>
+                            <p class="sk-vt-field__desc"><?php esc_html_e( 'One row per page view. Your reports are not built from these — they are built from the hourly summaries, which are never deleted — so clearing old rows leaves every chart and total exactly as it was. What it does cost is the record of the individual visits themselves.', 'shrikant-visitor-tracker' ); ?></p>
+                            <?php if ( $this->settings->retention_days() > 0 ) : ?>
+                                <div class="sk-vt-note sk-vt-note--warn" style="margin-top:10px">
+                                    <span class="dashicons dashicons-info-outline" aria-hidden="true"></span>
+                                    <p><?php
+                                        printf(
+                                            /* translators: %s: number of days. */
+                                            esc_html__( 'Visits older than %s days are being deleted each night. Campaign tags are the one report read from these rows, so UTM history beyond that point will not be available.', 'shrikant-visitor-tracker' ),
+                                            esc_html( number_format_i18n( $this->settings->retention_days() ) )
+                                        );
+                                    ?></p>
+                                </div>
+                            <?php endif; ?>
                         </div>
 
                         <div class="sk-vt-field">
@@ -1877,7 +1909,8 @@ final class Shrikant_VT_Admin {
                     <div class="sk-vt-card" id="sk-vt-upkeep" style="margin-bottom:16px">
                         <div class="sk-vt-card__head"><h2><?php echo esc_html( $sections['upkeep'] ); ?></h2></div>
                         <div class="sk-vt-prose">
-                            <p><?php esc_html_e( 'Individual visits are rolled up into hourly summaries once an hour, and the raw rows are cleared after the retention period set in Settings. The reports read the summaries, so they stay fast however much traffic the site gets.', 'shrikant-visitor-tracker' ); ?></p>
+                            <p><?php esc_html_e( 'Individual visits are rolled up into hourly summaries once an hour, and every report is built from those summaries. That is what keeps a report fast however much traffic the site gets, and it is why the summaries are kept for good.', 'shrikant-visitor-tracker' ); ?></p>
+                            <p><?php esc_html_e( 'The individual rows underneath are kept for good as well, unless you choose otherwise in Settings. Deleting them does not affect a single chart or total; it only gives up the record of the visits themselves, and the campaign-tag report, which is the one thing still read from them.', 'shrikant-visitor-tracker' ); ?></p>
                         </div>
                         <div class="sk-vt-note sk-vt-note--warn">
                             <span class="dashicons dashicons-shield" aria-hidden="true"></span>

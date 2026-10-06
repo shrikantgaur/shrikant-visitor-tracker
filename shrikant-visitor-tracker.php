@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name:       Shrikant Visitor Tracker
- * Plugin URI:        https://profiles.wordpress.org/shrikantgaur/
- * Description:       A modern, lightweight, privacy-first, self-hosted visitor analytics plugin for WordPress. Tracks unique visitors, page views, devices, referrers, UTM parameters, countries, and real-time online users — with zero paid dependencies.
+ * Plugin URI:        https://github.com/shrikantgaur/shrikant-visitor-tracker
+ * Description:       Visitor analytics that counts correctly behind a page cache, and imports your old view counter's history instead of throwing it away.
  * Version:           1.0.0
  * Requires at least: 6.3
  * Requires PHP:      8.2

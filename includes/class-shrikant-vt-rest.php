@@ -12,19 +12,19 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Class Shrikant_VT_REST
  *
- * Registers read-only REST endpoints under /wp-json/sk-vt/v1/.
+ * Registers read-only REST endpoints under /wp-json/shrikant-vt/v1/.
  * All endpoints require the manage_options capability (admin only).
  *
  * Endpoints:
  * ──────────
- *   GET /sk-vt/v1/summary          → today/week/month/year totals + online count
- *   GET /sk-vt/v1/series           → daily pageview series (last N days, default 30)
- *   GET /sk-vt/v1/top-pages        → top pages by pageviews (last N days)
- *   GET /sk-vt/v1/traffic-sources  → referrer type breakdown
- *   GET /sk-vt/v1/devices          → device type breakdown
- *   GET /sk-vt/v1/countries        → top countries
- *   GET /sk-vt/v1/online           → currently online visitor count
- *   GET /sk-vt/v1/hourly           → hourly distribution for today
+ *   GET /shrikant-vt/v1/summary          → today/week/month/year totals + online count
+ *   GET /shrikant-vt/v1/series           → daily pageview series (last N days, default 30)
+ *   GET /shrikant-vt/v1/top-pages        → top pages by pageviews (last N days)
+ *   GET /shrikant-vt/v1/traffic-sources  → referrer type breakdown
+ *   GET /shrikant-vt/v1/devices          → device type breakdown
+ *   GET /shrikant-vt/v1/countries        → top countries
+ *   GET /shrikant-vt/v1/online           → currently online visitor count
+ *   GET /shrikant-vt/v1/hourly           → hourly distribution for today
  *
  * These endpoints power:
  *  • The admin dashboard widgets (avoids full page reload for "online" card).
@@ -40,7 +40,7 @@ defined( 'ABSPATH' ) || exit;
 final class Shrikant_VT_REST {
 
     /** REST namespace. */
-    private const NAMESPACE = 'sk-vt/v1';
+    private const NAMESPACE = 'shrikant-vt/v1';
 
     public function __construct(
         private readonly Shrikant_VT_Stats  $stats,

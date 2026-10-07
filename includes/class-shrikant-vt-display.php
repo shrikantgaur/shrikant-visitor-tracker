@@ -31,7 +31,7 @@ final class Shrikant_VT_Display {
 	 * Hooks.
 	 */
 	public function register_hooks(): void {
-		add_shortcode( 'sk_views', [ $this, 'shortcode' ] );
+		add_shortcode( 'shrikant_views', [ $this, 'shortcode' ] );
 		add_filter( 'the_content', [ $this, 'maybe_append' ], 20 );
 		add_action( 'wp_enqueue_scripts', [ $this, 'enqueue_styles' ] );
 	}
@@ -127,7 +127,7 @@ final class Shrikant_VT_Display {
 	}
 
 	/**
-	 * [sk_views] — or [sk_views id="12" label="Reads:"]
+	 * [shrikant_views] — or [shrikant_views id="12" label="Reads:"]
 	 *
 	 * @param array<string,string>|string $atts Attributes.
 	 * @return string
@@ -140,7 +140,7 @@ final class Shrikant_VT_Display {
 				'raw'   => 'no',
 			],
 			(array) $atts,
-			'sk_views'
+			'shrikant_views'
 		);
 
 		$post_id = $atts['id'] ? (int) $atts['id'] : (int) get_the_ID();

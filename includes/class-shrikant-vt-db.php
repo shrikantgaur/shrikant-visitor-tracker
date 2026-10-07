@@ -17,12 +17,12 @@ defined( 'ABSPATH' ) || exit;
  *
  * Schema design decisions:
  * ─────────────────────────
- * • sk_visitor_analytics  : One row per page-view (raw events).
+ * • shrikant_visitor_analytics  : One row per page-view (raw events).
  *   - Kept narrow to minimise I/O on writes; heavy columns are nullable.
  *   - Composite index on (visit_date, page_id) powers most dashboard queries.
  *   - visitor_id is a hashed/opaque string — never a real IP.
  *
- * • sk_visitor_summary    : Pre-aggregated hourly/daily buckets.
+ * • shrikant_visitor_summary    : Pre-aggregated hourly/daily buckets.
  *   - Written by WP-Cron every hour from the raw table.
  *   - Dashboard widgets read ONLY from here → fast, no full-table scans.
  *   - UNIQUE KEY on (period_type, period_start, page_id, dimension_key)
@@ -32,7 +32,7 @@ final class Shrikant_VT_DB {
 
     // DB schema version — bump to trigger dbDelta re-run on next upgrade.
     private const SCHEMA_VERSION = '1.1.0';
-    private const OPTION_KEY     = 'sk_vt_db_version';
+    private const OPTION_KEY     = 'shrikant_vt_db_version';
 
     /**
      * Static install entry-point, called by register_activation_hook().
@@ -45,7 +45,100 @@ final class Shrikant_VT_DB {
      * Instance entry-point — also called by register_hooks() so upgrades
      * run automatically when the plugin is updated via wp-admin.
      */
+    /**
+     * Move anything stored under the old, weakly prefixed names.
+     *
+     * Everything this plugin writes used to be keyed on "sk_vt" / "sk_visitor",
+     * which is too short to be safely distinct. Renaming the keys without
+     * moving what is already under them would leave a working install looking
+     * like a fresh one, with months of visits still in the database and
+     * nothing reading them. So this runs once, before anything else.
+     *
+     * Each step checks that the old name exists and the new one does not, so
+     * running it twice cannot overwrite migrated data with stale data.
+     *
+     * @return array<string,int> What was moved, for the log.
+     */
+    public static function migrate_legacy_names(): array {
+        global $wpdb;
+
+        $moved = [ 'tables' => 0, 'options' => 0, 'meta' => 0, 'transients' => 0, 'events' => 0 ];
+
+        // ── Tables ──────────────────────────────────────────────────────────
+        foreach ( [
+            'sk_visitor_analytics' => Shrikant_VT_TABLE_RAW,
+            'sk_visitor_summary'   => Shrikant_VT_TABLE_SUM,
+        ] as $old_suffix => $new_suffix ) {
+            $old = $wpdb->prefix . $old_suffix;
+            $new = $wpdb->prefix . $new_suffix;
+
+            // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table names are built from $wpdb->prefix and this plugin's own constants, never from input.
+            $has_old = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $old ) );
+            $has_new = (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $new ) );
+
+            if ( $has_old && ! $has_new ) {
+                $wpdb->query( "RENAME TABLE `{$old}` TO `{$new}`" );
+                $moved['tables']++;
+            }
+            // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
+        }
+
+        // ── Options ─────────────────────────────────────────────────────────
+        foreach ( [ 'settings', 'db_version', 'last_agg_id', 'import_log' ] as $name ) {
+            $old = 'sk_vt_' . $name;
+            $new = 'shrikant_vt_' . $name;
+            $val = get_option( $old, null );
+
+            if ( null !== $val && false === get_option( $new, false ) ) {
+                update_option( $new, $val, false );
+                $moved['options']++;
+            }
+
+            delete_option( $old );
+        }
+
+        // ── Imported view counts, one meta key across every post ────────────
+        // phpcs:disable WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- a single keyed UPDATE on postmeta; there is no API for renaming a meta key.
+        $moved['meta'] = (int) $wpdb->query(
+            $wpdb->prepare(
+                "UPDATE {$wpdb->postmeta} SET meta_key = %s WHERE meta_key = %s",
+                '_shrikant_vt_imported_views',
+                '_sk_vt_imported_views'
+            )
+        );
+
+        // ── Old caches: not worth moving, only worth clearing ───────────────
+        $like = $wpdb->esc_like( '_transient_sk_vt_' ) . '%';
+        $like_timeout = $wpdb->esc_like( '_transient_timeout_sk_vt_' ) . '%';
+        $moved['transients'] = (int) $wpdb->query(
+            $wpdb->prepare(
+                "DELETE FROM {$wpdb->options} WHERE option_name LIKE %s OR option_name LIKE %s",
+                $like,
+                $like_timeout
+            )
+        );
+        // phpcs:enable WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
+
+        // ── Scheduled events ────────────────────────────────────────────────
+        foreach ( [ 'sk_vt_hourly_aggregate', 'sk_vt_daily_cleanup' ] as $old_hook ) {
+            if ( wp_next_scheduled( $old_hook ) ) {
+                wp_clear_scheduled_hook( $old_hook );
+                $moved['events']++;
+            }
+        }
+
+        return $moved;
+    }
+
     public function maybe_upgrade(): void {
+        /*
+         * Before the version check. An install still on the old key names has
+         * no shrikant_vt_db_version to compare against, so it would be taken
+         * for a brand-new one while its months of data sat under keys nothing
+         * reads any more.
+         */
+        self::migrate_legacy_names();
+
         if ( get_option( self::OPTION_KEY ) === self::SCHEMA_VERSION ) {
             return; // Already up-to-date.
         }
@@ -184,7 +277,7 @@ final class Shrikant_VT_DB {
         // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
         // phpcs:enable
         delete_option( self::OPTION_KEY );
-        delete_option( 'sk_vt_settings' );
+        delete_option( 'shrikant_vt_settings' );
     }
 
     /**

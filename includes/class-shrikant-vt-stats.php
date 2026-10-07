@@ -46,7 +46,7 @@ final class Shrikant_VT_Stats {
     ): array {
         global $wpdb;
 
-        $cache_key = 'sk_vt_totals_' . md5( $from . $to . (string) $page_id );
+        $cache_key = 'shrikant_vt_totals_' . md5( $from . $to . (string) $page_id );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
@@ -167,7 +167,7 @@ final class Shrikant_VT_Stats {
     public function daily_series( int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = 'sk_vt_daily_series_' . $this->window_key( $days, $window );
+        $cache_key = 'shrikant_vt_daily_series_' . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
@@ -212,7 +212,7 @@ final class Shrikant_VT_Stats {
     public function hourly_today(): array {
         global $wpdb;
 
-        $cache_key = 'sk_vt_hourly_today_' . gmdate( 'YmdH' );
+        $cache_key = 'shrikant_vt_hourly_today_' . gmdate( 'YmdH' );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
@@ -256,7 +256,7 @@ final class Shrikant_VT_Stats {
     public function top_pages( int $limit = 10, int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = "sk_vt_top_pages_{$limit}_" . $this->window_key( $days, $window );
+        $cache_key = "shrikant_vt_top_pages_{$limit}_" . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
@@ -312,7 +312,7 @@ final class Shrikant_VT_Stats {
     public function traffic_sources( int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = 'sk_vt_sources_' . $this->window_key( $days, $window );
+        $cache_key = 'shrikant_vt_sources_' . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
@@ -357,7 +357,7 @@ final class Shrikant_VT_Stats {
     public function top_countries( int $limit = 10, int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = "sk_vt_countries_{$limit}_" . $this->window_key( $days, $window );
+        $cache_key = "shrikant_vt_countries_{$limit}_" . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
@@ -403,7 +403,7 @@ final class Shrikant_VT_Stats {
     public function device_breakdown( int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = 'sk_vt_devices_' . $this->window_key( $days, $window );
+        $cache_key = 'shrikant_vt_devices_' . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
@@ -448,7 +448,7 @@ final class Shrikant_VT_Stats {
     public function daily_series_for_page( int $days, int $page_id, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = "sk_vt_series_{$page_id}_" . $this->window_key( $days, $window );
+        $cache_key = "shrikant_vt_series_{$page_id}_" . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
@@ -496,7 +496,7 @@ final class Shrikant_VT_Stats {
     public function browser_breakdown( int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = 'sk_vt_browsers_' . $this->window_key( $days, $window );
+        $cache_key = 'shrikant_vt_browsers_' . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
@@ -540,7 +540,7 @@ final class Shrikant_VT_Stats {
     public function os_breakdown( int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = 'sk_vt_os_' . $this->window_key( $days, $window );
+        $cache_key = 'shrikant_vt_os_' . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
@@ -585,7 +585,7 @@ final class Shrikant_VT_Stats {
     public function utm_report( int $limit = 20, int $days = 30, ?array $window = null ): array {
         global $wpdb;
 
-        $cache_key = "sk_vt_utm_{$limit}_" . $this->window_key( $days, $window );
+        $cache_key = "shrikant_vt_utm_{$limit}_" . $this->window_key( $days, $window );
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;
@@ -667,7 +667,7 @@ final class Shrikant_VT_Stats {
     public function all_time_totals(): array {
         global $wpdb;
 
-        $cache_key = 'sk_vt_alltime';
+        $cache_key = 'shrikant_vt_alltime';
         $cached    = get_transient( $cache_key );
         if ( false !== $cached ) {
             return $cached;

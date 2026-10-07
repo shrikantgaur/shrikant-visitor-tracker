@@ -14,22 +14,22 @@ defined( 'ABSPATH' ) || exit;
  *
  * Manages two scheduled tasks:
  *
- * 1. sk_vt_hourly_aggregate (hourly)
- *    Reads new raw rows from sk_visitor_analytics, groups them by
+ * 1. shrikant_vt_hourly_aggregate (hourly)
+ *    Reads new raw rows from shrikant_visitor_analytics, groups them by
  *    period bucket + dimension in SQL (one query per dimension),
- *    then upserts into sk_visitor_summary using multi-row INSERT …
+ *    then upserts into shrikant_visitor_summary using multi-row INSERT …
  *    ON DUPLICATE KEY UPDATE. Previously did one query per row × per
  *    dimension (up to 25,000 queries/run). Now: 5 queries total.
  *
- * 2. sk_vt_daily_cleanup (daily)
+ * 2. shrikant_vt_daily_cleanup (daily)
  *    Deletes raw rows older than the configured retention period in
  *    batches of 1,000 to avoid table-locking. Also purges old summary
  *    buckets beyond 2× retention.
  */
 final class Shrikant_VT_Cron {
 
-    private const HOURLY_HOOK  = 'sk_vt_hourly_aggregate';
-    private const DAILY_HOOK   = 'sk_vt_daily_cleanup';
+    private const HOURLY_HOOK  = 'shrikant_vt_hourly_aggregate';
+    private const DAILY_HOOK   = 'shrikant_vt_daily_cleanup';
 
     /** Maximum rows to process per aggregation run. */
     private const AGG_BATCH = 10000;
@@ -116,7 +116,7 @@ final class Shrikant_VT_Cron {
         $wpdb->query( "DELETE FROM {$sum_table}" );
         // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
 
-        update_option( 'sk_vt_last_agg_id', 0, false );
+        update_option( 'shrikant_vt_last_agg_id', 0, false );
 
         // One batch at a time, the way the hourly job does it.
         $guard = 0;
@@ -202,7 +202,7 @@ final class Shrikant_VT_Cron {
         global $wpdb;
 
         $raw_table = Shrikant_VT_DB::raw_table();
-        $last_id   = (int) get_option( 'sk_vt_last_agg_id', 0 );
+        $last_id   = (int) get_option( 'shrikant_vt_last_agg_id', 0 );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table name comes from Shrikant_VT_DB; the value is a placeholder.
         $behind = (int) $wpdb->get_var(
@@ -224,7 +224,7 @@ final class Shrikant_VT_Cron {
 
         $raw_table = Shrikant_VT_DB::raw_table();
         $sum_table = Shrikant_VT_DB::sum_table();
-        $last_id   = (int) get_option( 'sk_vt_last_agg_id', 0 );
+        $last_id   = (int) get_option( 'shrikant_vt_last_agg_id', 0 );
 
         // Find the upper bound ID for this batch — process at most AGG_BATCH rows.
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table names come from Shrikant_VT_DB and the dimension columns from the literal map above, never from input; every value is a placeholder.
@@ -298,7 +298,7 @@ final class Shrikant_VT_Cron {
             }
         }
 
-        update_option( 'sk_vt_last_agg_id', $max_id, false );
+        update_option( 'shrikant_vt_last_agg_id', $max_id, false );
 
         // Flush stat transients so dashboard reflects updated data.
         $this->flush_stat_transients();
@@ -405,15 +405,15 @@ final class Shrikant_VT_Cron {
 
     /**
      * Delete all plugin stat transients from wp_options.
-     * Deletes both _transient_sk_vt_* and _transient_timeout_sk_vt_* rows
+     * Deletes both _transient_shrikant_vt_* and _transient_timeout_shrikant_vt_* rows
      * to prevent orphaned timeout entries accumulating.
      * Runs hourly in the background — acceptable use of a LIKE query.
      */
     private function flush_stat_transients(): void {
         global $wpdb;
 
-        $base_prefix    = $wpdb->esc_like( '_transient_sk_vt_' );
-        $timeout_prefix = $wpdb->esc_like( '_transient_timeout_sk_vt_' );
+        $base_prefix    = $wpdb->esc_like( '_transient_shrikant_vt_' );
+        $timeout_prefix = $wpdb->esc_like( '_transient_timeout_shrikant_vt_' );
 
         // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table names come from Shrikant_VT_DB and the dimension columns from the literal map above, never from input; every value is a placeholder.
         $wpdb->query(

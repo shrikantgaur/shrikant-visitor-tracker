@@ -38,8 +38,8 @@ final class Shrikant_VT_Geo {
     /** Fallback country code for any failure. */
     private const UNKNOWN = 'XX';
 
-    /** Transient key prefix — full key: sk_vt_geo_{md5(ip)}. */
-    private const CACHE_PREFIX = 'sk_vt_geo_';
+    /** Transient key prefix — full key: shrikant_vt_geo_{md5(ip)}. */
+    private const CACHE_PREFIX = 'shrikant_vt_geo_';
 
     /** Free geo-IP endpoint. Returns JSON: {"countryCode":"US",...} */
     /*

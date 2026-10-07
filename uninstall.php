@@ -22,12 +22,12 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
  * person believed they were keeping it. The setting lives under Settings →
  * "Delete all data when the plugin is deleted" and is off by default.
  */
-$shrikant_vt_settings = get_option( 'sk_vt_settings', [] );
+$shrikant_vt_settings = get_option( 'shrikant_vt_settings', [] );
 
 if ( empty( $shrikant_vt_settings['delete_data_on_uninstall'] ) ) {
 	// Tidy up only what is cheap to rebuild: scheduled events and caches.
-	wp_clear_scheduled_hook( 'sk_vt_hourly_aggregate' );
-	wp_clear_scheduled_hook( 'sk_vt_daily_cleanup' );
+	wp_clear_scheduled_hook( 'shrikant_vt_hourly_aggregate' );
+	wp_clear_scheduled_hook( 'shrikant_vt_daily_cleanup' );
 
 	return;
 }
@@ -46,12 +46,12 @@ if ( is_multisite() ) {
 
 // Remove network-level options if network-activated.
 if ( is_multisite() ) {
-    delete_site_option( 'sk_vt_db_version' );
+    delete_site_option( 'shrikant_vt_db_version' );
 }
 
 // Clear cron events (network-wide hooks).
-wp_clear_scheduled_hook( 'sk_vt_hourly_aggregate' );
-wp_clear_scheduled_hook( 'sk_vt_daily_cleanup' );
+wp_clear_scheduled_hook( 'shrikant_vt_hourly_aggregate' );
+wp_clear_scheduled_hook( 'shrikant_vt_daily_cleanup' );
 
 /**
  * Drop tables, delete options, and purge transients for the current blog.
@@ -61,8 +61,8 @@ function shrikant_vt_uninstall_site(): void {
     global $wpdb;
 
     // Drop plugin tables.
-    $raw = $wpdb->prefix . 'sk_visitor_analytics';
-    $sum = $wpdb->prefix . 'sk_visitor_summary';
+    $raw = $wpdb->prefix . 'shrikant_visitor_analytics';
+    $sum = $wpdb->prefix . 'shrikant_visitor_summary';
 
     // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table names are built from $wpdb->prefix; DROP and LIKE patterns cannot take placeholders.
     $wpdb->query( "DROP TABLE IF EXISTS `{$raw}`" );
@@ -73,13 +73,13 @@ function shrikant_vt_uninstall_site(): void {
     // phpcs:enable
 
     // Delete plugin options.
-    delete_option( 'sk_vt_settings' );
-    delete_option( 'sk_vt_db_version' );
-    delete_option( 'sk_vt_last_agg_id' );
+    delete_option( 'shrikant_vt_settings' );
+    delete_option( 'shrikant_vt_db_version' );
+    delete_option( 'shrikant_vt_last_agg_id' );
 
     // Purge all plugin transients — both the value and the timeout key.
-    $base_prefix    = $wpdb->esc_like( '_transient_sk_vt_' );
-    $timeout_prefix = $wpdb->esc_like( '_transient_timeout_sk_vt_' );
+    $base_prefix    = $wpdb->esc_like( '_transient_shrikant_vt_' );
+    $timeout_prefix = $wpdb->esc_like( '_transient_timeout_shrikant_vt_' );
 
     // phpcs:disable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB -- table names are built from $wpdb->prefix; DROP and LIKE patterns cannot take placeholders.
     $wpdb->query(
@@ -91,6 +91,6 @@ function shrikant_vt_uninstall_site(): void {
     // phpcs:enable
 
     // Remove per-site cron events.
-    wp_clear_scheduled_hook( 'sk_vt_hourly_aggregate' );
-    wp_clear_scheduled_hook( 'sk_vt_daily_cleanup' );
+    wp_clear_scheduled_hook( 'shrikant_vt_hourly_aggregate' );
+    wp_clear_scheduled_hook( 'shrikant_vt_daily_cleanup' );
 }

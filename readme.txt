@@ -43,14 +43,14 @@ Shrikant Visitor Tracker gives you complete control over your visitor analytics 
 * **Total / daily / weekly / monthly / yearly visitors** with page-level tracking
 * **Device, browser, and OS detection** via lightweight User-Agent parsing (no library)
 * **Referrer categorisation** (direct, search, social, other) + full **UTM parameter tracking**
-* **Country detection** via ipwho.is (free, no API key, IP anonymised before it is sent, cached for at least 24h)
+* **Country detection, off by default** — turn it on and the anonymised IP (never the full one) goes to ipwho.is for a country code, cached 24h. This is the only outside request the plugin can make
 * **Real-time "currently online" counter** using WordPress transients
 * **Counts correctly behind a page cache** — a non-blocking browser beacon, not a PHP counter, so WP Rocket, LiteSpeed, W3 Total Cache and Cloudflare do not hide your readers
 * **Pre-aggregated summary table** — every report is built from hourly summaries, so a report stays fast whatever the traffic, and the summaries are kept for good
 * **Bot filtering** — user-agent matching against a maintained list, plus proxy and prefetch headers, before anything is recorded
 * **Privacy-first** — IP anonymisation, DNT header respect, cookie consent hook, GDPR data export/erasure
-* **REST API** — full stats API under `/wp-json/sk-vt/v1/` for headless or custom integrations
-* **WP-CLI commands** — `wp sk-vt stats today`, `wp sk-vt export`, `wp sk-vt cleanup --dry-run`, and more
+* **REST API** — full stats API under `/wp-json/shrikant-vt/v1/` for headless or custom integrations
+* **WP-CLI commands** — `wp shrikant-vt stats today`, `wp shrikant-vt export`, `wp shrikant-vt cleanup --dry-run`, and more
 * **Import from Post Views Counter or WP-PostViews** — switch without losing the history
 * **Any date range** — the usual 7/30/90-day presets, or two dates of your own
 * **Searchable, sortable, paginated reports** with CSV export
@@ -60,7 +60,7 @@ Shrikant Visitor Tracker gives you complete control over your visitor analytics 
 
 = Third-party code =
 
-This plugin bundles Chart.js 4.4.1 (https://www.chartjs.org), used to draw the
+This plugin bundles Chart.js 4.5.1 (https://www.chartjs.org), used to draw the
 dashboard charts. Chart.js is released under the MIT licence, which is
 compatible with the GPL, and its source is at https://github.com/chartjs/Chart.js.
 It is bundled rather than loaded from a CDN because a plugin in this directory
@@ -96,7 +96,9 @@ other third-party code is loaded.
 
 = Does this plugin share data with third parties? =
 
-Only for country detection: if geo lookup is enabled, the anonymised IP address (last octet zeroed) is sent over https to ipwho.is (https://ipwho.is), whose terms are at https://ipwho.is/terms and privacy policy at https://ipwho.is/privacy. Nothing else about the visitor is sent, and turning Country Detection off in Settings stops it entirely. The result is cached for at least 24 hours. All other data stays on your server.
+Not unless you switch country detection on, and it ships off.
+
+With it on, the anonymised IP address (last octet zeroed) is sent over https to ipwho.is, operated by ipwhois.io, which returns a two-letter country code and nothing else. Terms: https://ipwhois.io/terms — Privacy: https://ipwhois.io/privacy. The result is cached for at least 24 hours. Nothing else about a visitor ever leaves the site, and switching the setting back off stops it entirely. The result is cached for at least 24 hours. All other data stays on your server.
 
 = Is this compatible with caching plugins? =
 
@@ -112,7 +114,7 @@ Yes. Each sub-site gets its own prefixed database tables and settings.
 
 = Can I use this with WP-CLI? =
 
-Yes. Run `wp sk-vt stats today`, `wp sk-vt top-pages --limit=20`, `wp sk-vt export --from=2025-01-01 --file=visits.csv`, and more.
+Yes. Run `wp shrikant-vt stats today`, `wp shrikant-vt top-pages --limit=20`, `wp shrikant-vt export --from=2025-01-01 --file=visits.csv`, and more.
 
 
 == Changelog ==

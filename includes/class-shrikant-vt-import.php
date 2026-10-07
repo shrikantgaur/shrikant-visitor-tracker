@@ -34,10 +34,10 @@ defined( 'ABSPATH' ) || exit;
 final class Shrikant_VT_Import {
 
 	/** Per-post meta key holding the imported total. */
-	public const META_KEY = '_sk_vt_imported_views';
+	public const META_KEY = '_shrikant_vt_imported_views';
 
 	/** Option recording what was imported, and from where. */
-	public const LOG_OPTION = 'sk_vt_import_log';
+	public const LOG_OPTION = 'shrikant_vt_import_log';
 
 	/**
 	 * Sources this can import from.

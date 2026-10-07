@@ -13,7 +13,7 @@ defined( 'ABSPATH' ) || exit;
  * Class Shrikant_VT_Settings
  *
  * Provides typed getters for every plugin option.
- * All settings live in a single WP option (sk_vt_settings) to minimise
+ * All settings live in a single WP option (shrikant_vt_settings) to minimise
  * autoloaded option rows.
  *
  * Extend via the filter shrikant_vt_default_settings if you need to add options
@@ -21,7 +21,7 @@ defined( 'ABSPATH' ) || exit;
  */
 final class Shrikant_VT_Settings {
 
-    private const OPTION_KEY = 'sk_vt_settings';
+    private const OPTION_KEY = 'shrikant_vt_settings';
 
     /** @var array<string,mixed> Merged defaults + saved values. */
     private array $data;
@@ -182,7 +182,13 @@ final class Shrikant_VT_Settings {
             'online_ttl'        => 300,    // 5 minutes.
             'track_admins'      => false,
             'async_tracking'    => true,
-            'geo_enabled'       => true,
+            /*
+             * Off until the site owner turns it on. This is the only thing
+             * the plugin sends anywhere, and Guidelines 7 and 9 require that
+             * contacting an outside service be a choice somebody makes, not
+             * one that happens on activation.
+             */
+            'geo_enabled'       => false,
             'geo_cache_ttl'     => 86400,  // 24 hours.
 
             /*
@@ -231,7 +237,7 @@ final class Shrikant_VT_Settings {
 
     /** Register Settings API hooks (admin form submission). */
     public function register_hooks(): void {
-        add_action( 'admin_post_sk_vt_save_settings', [ $this, 'handle_form_submit' ] );
+        add_action( 'admin_post_shrikant_vt_save_settings', [ $this, 'handle_form_submit' ] );
     }
 
     /** Handle the settings form POST (with nonce + capability check). */
@@ -239,7 +245,7 @@ final class Shrikant_VT_Settings {
         if ( ! current_user_can( 'manage_options' ) ) {
             wp_die( esc_html__( 'Insufficient permissions.', 'shrikant-visitor-tracker' ) );
         }
-        check_admin_referer( 'sk_vt_settings_save', 'sk_vt_nonce' );
+        check_admin_referer( 'shrikant_vt_settings_save', 'shrikant_vt_nonce' );
 
         // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
         $this->save( $_POST );

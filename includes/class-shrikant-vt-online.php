@@ -17,7 +17,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * Implementation:
  * ───────────────
- * We store a single transient 'sk_vt_online_visitors' that holds a
+ * We store a single transient 'shrikant_vt_online_visitors' that holds a
  * JSON-encoded array of { visitor_id => last_seen_timestamp } pairs.
  *
  * On each tracked request:
@@ -35,13 +35,13 @@ defined( 'ABSPATH' ) || exit;
  * Scalability note for 50k+ req/day:
  * ────────────────────────────────────
  * At extreme traffic, replace this with a Redis ZADD + ZCOUNT pattern:
- *   ZADD sk_vt_online {timestamp} {visitor_id}
- *   ZCOUNT sk_vt_online {now-ttl} {now}
+ *   ZADD shrikant_vt_online {timestamp} {visitor_id}
+ *   ZCOUNT shrikant_vt_online {now-ttl} {now}
  * That eliminates PHP-side pruning entirely.
  */
 final class Shrikant_VT_Online {
 
-    private const TRANSIENT_KEY = 'sk_vt_online_visitors';
+    private const TRANSIENT_KEY = 'shrikant_vt_online_visitors';
 
     public function __construct(
         private readonly Shrikant_VT_Settings $settings

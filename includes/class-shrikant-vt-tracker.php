@@ -30,7 +30,7 @@ defined( 'ABSPATH' ) || exit;
  *
  * Cookie strategy:
  * ─────────────────
- * • sk_unique_id  : Long-lived (2-year), HttpOnly, Secure, SameSite=Lax.
+ * • shrikant_vt_uid  : Long-lived (2-year), HttpOnly, Secure, SameSite=Lax.
  *                   Holds a random 32-byte hex unique visitor token.
  * • sk_session_id : Session cookie (no expiry), rotates on each browser
  *                   session, used to count visits vs page views.
@@ -45,7 +45,7 @@ defined( 'ABSPATH' ) || exit;
 final class Shrikant_VT_Tracker {
 
     /** AJAX action for async tracking. */
-    private const AJAX_ACTION = 'sk_vt_async_track';
+    private const AJAX_ACTION = 'shrikant_vt_async_track';
 
     public function __construct(
         private readonly Shrikant_VT_Settings      $settings,
@@ -322,7 +322,7 @@ final class Shrikant_VT_Tracker {
      * Uses a short-lived transient as a fast dedup gate (avoids a SELECT).
      */
     private function is_unique_visit_today( string $visitor_id ): bool {
-        $key   = 'sk_vt_uv_' . substr( $visitor_id, 0, 16 ) . '_' . gmdate( 'Ymd' );
+        $key   = 'shrikant_vt_uv_' . substr( $visitor_id, 0, 16 ) . '_' . gmdate( 'Ymd' );
         $seen  = get_transient( $key );
 
         if ( false !== $seen ) {
@@ -428,7 +428,7 @@ final class Shrikant_VT_Tracker {
      */
     private function is_rate_limited(): bool {
         $ip      = $this->privacy->get_client_ip();
-        $key     = 'sk_vt_rl_' . substr( md5( $ip ), 0, 16 );
+        $key     = 'shrikant_vt_rl_' . substr( md5( $ip ), 0, 16 );
         $current = (int) get_transient( $key );
 
         if ( $current >= 60 ) {

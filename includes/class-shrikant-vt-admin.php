@@ -61,7 +61,8 @@ final class Shrikant_VT_Admin {
         add_action( 'admin_menu',               [ $this, 'register_menu' ] );
         add_action( 'admin_enqueue_scripts',    [ $this, 'enqueue_assets' ] );
         add_action( 'wp_dashboard_setup',       [ $this, 'register_dashboard_widget' ] );
-        add_action( 'admin_post_sk_vt_import',  [ $this, 'handle_import' ] );
+        add_action( 'admin_enqueue_scripts',    [ $this, 'enqueue_widget_styles' ] );
+        add_action( 'admin_post_shrikant_vt_import',  [ $this, 'handle_import' ] );
     }
 
     // ── WordPress Dashboard widget ────────────────────────────────────────────
@@ -71,9 +72,37 @@ final class Shrikant_VT_Admin {
             return;
         }
         wp_add_dashboard_widget(
-            'sk_vt_dashboard_widget',
+            'shrikant_vt_dashboard_widget',
             __( 'Shrikant Analytics — Quick Stats', 'shrikant-visitor-tracker' ),
             [ $this, 'render_dashboard_widget' ]
+        );
+    }
+
+    /**
+     * Styles for the Dashboard widget.
+     *
+     * Enqueued against a file-less handle rather than printed as a <style>
+     * block, and only on wp-admin/index.php, which is the one screen the
+     * widget appears on.
+     */
+    public function enqueue_widget_styles( string $hook ): void {
+        if ( 'index.php' !== $hook || ! current_user_can( 'manage_options' ) ) {
+            return;
+        }
+
+        wp_register_style( 'shrikant-vt-widget', false, [], Shrikant_VT_VERSION );
+        wp_enqueue_style( 'shrikant-vt-widget' );
+        wp_add_inline_style(
+            'shrikant-vt-widget',
+			  '#shrikant_vt_dashboard_widget .sk-vt-dw-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}'
+			. '#shrikant_vt_dashboard_widget .sk-vt-dw-card{position:relative;background:#f6f7f7;border-radius:5px;padding:11px 13px;overflow:hidden}'
+			. '#shrikant_vt_dashboard_widget .sk-vt-dw-card::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:#2271b1;opacity:.85}'
+			. '#shrikant_vt_dashboard_widget .sk-vt-dw-card h4{margin:0 0 3px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#787c82;font-weight:600}'
+			. '#shrikant_vt_dashboard_widget .sk-vt-dw-num{font-size:1.5rem;font-weight:600;color:#1d2327;line-height:1.15;font-variant-numeric:tabular-nums}'
+			. '#shrikant_vt_dashboard_widget .sk-vt-dw-sub{font-size:11px;color:#787c82}'
+			. '#shrikant_vt_dashboard_widget .sk-vt-dw-online::before{background:#00a32a}'
+			. '#shrikant_vt_dashboard_widget .sk-vt-dw-online .sk-vt-dw-num{color:#007017}'
+			. '#shrikant_vt_dashboard_widget .sk-vt-dw-foot{display:flex;justify-content:flex-end;margin:0}'
         );
     }
 
@@ -88,17 +117,6 @@ final class Shrikant_VT_Admin {
         $online = $this->online->get_count();
         $url    = admin_url( 'admin.php?page=shrikant-visitor-tracker' );
         ?>
-        <style>
-        #sk_vt_dashboard_widget .sk-vt-dw-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:12px}
-        #sk_vt_dashboard_widget .sk-vt-dw-card{position:relative;background:#f6f7f7;border-radius:5px;padding:11px 13px;overflow:hidden}
-        #sk_vt_dashboard_widget .sk-vt-dw-card::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:#2271b1;opacity:.85}
-        #sk_vt_dashboard_widget .sk-vt-dw-card h4{margin:0 0 3px;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:#787c82;font-weight:600}
-        #sk_vt_dashboard_widget .sk-vt-dw-num{font-size:1.5rem;font-weight:600;color:#1d2327;line-height:1.15;font-variant-numeric:tabular-nums}
-        #sk_vt_dashboard_widget .sk-vt-dw-sub{font-size:11px;color:#787c82}
-        #sk_vt_dashboard_widget .sk-vt-dw-online::before{background:#00a32a}
-        #sk_vt_dashboard_widget .sk-vt-dw-online .sk-vt-dw-num{color:#007017}
-        #sk_vt_dashboard_widget .sk-vt-dw-foot{display:flex;justify-content:flex-end;margin:0}
-        </style>
         <div class="sk-vt-dw-grid">
             <?php
             $cards = [
@@ -140,7 +158,12 @@ final class Shrikant_VT_Admin {
             'shrikant-visitor-tracker',
             [ $this, 'render_dashboard' ],
             'dashicons-chart-area',
-            25
+            /*
+             * Below Settings (80) rather than up among Posts and Media. A
+             * fractional position is the usual way to avoid landing on the
+             * same slot as another plugin and displacing it.
+             */
+            80.7
         );
 
         $pages = [
@@ -168,7 +191,7 @@ final class Shrikant_VT_Admin {
 
         // Bundled, not fetched: the directory does not allow a plugin to load
         // code from somewhere else at run time.
-        wp_enqueue_script( 'shrikant-vt-chartjs', Shrikant_VT_URL . 'assets/js/chart.umd.min.js', [], '4.4.1', true );
+        wp_enqueue_script( 'shrikant-vt-chartjs', Shrikant_VT_URL . 'assets/js/chart.umd.min.js', [], '4.5.1', true );
         wp_enqueue_script( 'shrikant-vt-admin',   Shrikant_VT_URL . 'assets/js/admin.js', [ 'shrikant-vt-chartjs' ], Shrikant_VT_VERSION, true );
         wp_enqueue_style(  'shrikant-vt-admin',   Shrikant_VT_URL . 'assets/css/admin.css', [ 'dashicons' ], Shrikant_VT_VERSION );
 
@@ -191,7 +214,7 @@ final class Shrikant_VT_Admin {
         $daily = $this->stats->daily_series( $days, $args );
 
         wp_localize_script( 'shrikant-vt-admin', 'skVtAdmin', [
-            'restUrl'  => esc_url_raw( rest_url( 'sk-vt/v1/' ) ),
+            'restUrl'  => esc_url_raw( rest_url( 'shrikant-vt/v1/' ) ),
             'nonce'    => wp_create_nonce( 'wp_rest' ),
             'devices'  => $devices,
             'sources'  => $sources,
@@ -617,7 +640,7 @@ final class Shrikant_VT_Admin {
 
     /** Link to the CSV export for a window. */
     private function export_url( array $window ): string {
-        return rest_url( 'sk-vt/v1/export?from=' . rawurlencode( $window['from'] ) . '&to=' . rawurlencode( $window['to'] ) );
+        return rest_url( 'shrikant-vt/v1/export?from=' . rawurlencode( $window['from'] ) . '&to=' . rawurlencode( $window['to'] ) );
     }
 
     // ── Dashboard ─────────────────────────────────────────────────────────────
@@ -1293,8 +1316,8 @@ final class Shrikant_VT_Admin {
 
             <div class="sk-vt-grid sk-vt-grid--wide-left">
                 <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="sk-vt-settings-form">
-                    <input type="hidden" name="action" value="sk_vt_save_settings">
-                    <?php wp_nonce_field( 'sk_vt_settings_save', 'sk_vt_nonce' ); ?>
+                    <input type="hidden" name="action" value="shrikant_vt_save_settings">
+                    <?php wp_nonce_field( 'shrikant_vt_settings_save', 'shrikant_vt_nonce' ); ?>
 
                     <fieldset class="sk-vt-card sk-vt-fieldset">
                         <legend><?php esc_html_e( 'Tracking', 'shrikant-visitor-tracker' ); ?></legend>
@@ -1328,7 +1351,7 @@ final class Shrikant_VT_Admin {
                         $this->option(
                             'auto_display',
                             __( 'Add the count automatically', 'shrikant-visitor-tracker' ),
-                            __( 'Turn this off to place the count yourself with the [sk_views] shortcode or a block, instead of having it appended.', 'shrikant-visitor-tracker' ),
+                            __( 'Turn this off to place the count yourself with the [shrikant_views] shortcode or a block, instead of having it appended.', 'shrikant-visitor-tracker' ),
                             $this->settings->auto_display()
                         );
 
@@ -1357,7 +1380,7 @@ final class Shrikant_VT_Admin {
 
                     <fieldset class="sk-vt-card sk-vt-fieldset">
                         <legend><?php esc_html_e( 'Privacy', 'shrikant-visitor-tracker' ); ?></legend>
-                        <p class="sk-vt-fieldset__sub"><?php esc_html_e( 'The raw IP address is never written to the database. These control what happens before that.', 'shrikant-visitor-tracker' ); ?></p>
+                        <p class="sk-vt-fieldset__sub"><?php esc_html_e( 'The raw IP address is never written to the database, and nothing is sent anywhere unless you switch on country detection below.', 'shrikant-visitor-tracker' ); ?></p>
                         <?php
                         $this->option(
                             'ip_anonymization',
@@ -1373,8 +1396,8 @@ final class Shrikant_VT_Admin {
                         );
                         $this->option(
                             'geo_enabled',
-                            __( 'Detect the country', 'shrikant-visitor-tracker' ),
-                            __( 'Resolves the anonymised address to a country through ipwho.is, over https, with no API key and the result cached for at least a day. This is the only thing that ever leaves your server — turn it off and nothing does.', 'shrikant-visitor-tracker' ),
+                            __( 'Detect the country (sends data to an outside service)', 'shrikant-visitor-tracker' ),
+                            __( 'Off until you switch it on. With it on, the anonymised address — never the full one — is sent over https to ipwho.is, which returns a two-letter country code and nothing else. The result is cached for at least a day. This is the only request this plugin ever makes to anywhere; with it off, nothing whatsoever leaves your server. See ipwhois.io/terms and ipwhois.io/privacy.', 'shrikant-visitor-tracker' ),
                             $this->settings->geo_enabled()
                         );
                         ?>
@@ -1486,14 +1509,14 @@ final class Shrikant_VT_Admin {
                                 <tr>
                                     <th scope="row"><?php esc_html_e( 'REST API', 'shrikant-visitor-tracker' ); ?></th>
                                     <td>
-                                        <a href="<?php echo esc_url( rest_url( 'sk-vt/v1/summary' ) ); ?>" target="_blank" rel="noopener">
+                                        <a href="<?php echo esc_url( rest_url( 'shrikant-vt/v1/summary' ) ); ?>" target="_blank" rel="noopener">
                                             <?php esc_html_e( 'summary endpoint', 'shrikant-visitor-tracker' ); ?>
                                         </a>
                                     </td>
                                 </tr>
                                 <tr>
                                     <th scope="row">WP-CLI</th>
-                                    <td><code>wp sk-vt stats today</code></td>
+                                    <td><code>wp shrikant-vt stats today</code></td>
                                 </tr>
                             </tbody>
                         </table>
@@ -1549,7 +1572,7 @@ final class Shrikant_VT_Admin {
             wp_die( esc_html__( 'You do not have permission to do that.', 'shrikant-visitor-tracker' ) );
         }
 
-        check_admin_referer( 'sk_vt_import' );
+        check_admin_referer( 'shrikant_vt_import' );
 
         $source = isset( $_POST['source'] ) ? sanitize_key( wp_unslash( $_POST['source'] ) ) : '';
         $args   = [ 'page' => 'shrikant-visitor-tracker-import' ];
@@ -1571,7 +1594,7 @@ final class Shrikant_VT_Admin {
      *
      * Exists because these counters are usually running on several sites and
      * WP-CLI is not always available on all of them — the same job the
-     * `wp sk-vt import` command does, from a button.
+     * `wp shrikant-vt import` command does, from a button.
      */
     public function render_import(): void {
         if ( ! current_user_can( 'manage_options' ) ) {
@@ -1713,9 +1736,9 @@ final class Shrikant_VT_Admin {
                         </dl>
 
                         <form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>" class="sk-vt-actions">
-                            <input type="hidden" name="action" value="sk_vt_import">
+                            <input type="hidden" name="action" value="shrikant_vt_import">
                             <input type="hidden" name="source" value="<?php echo esc_attr( (string) $key ); ?>">
-                            <?php wp_nonce_field( 'sk_vt_import' ); ?>
+                            <?php wp_nonce_field( 'shrikant_vt_import' ); ?>
                             <button type="submit" class="button button-primary">
                                 <span class="dashicons dashicons-download" aria-hidden="true"></span>
                                 <?php
@@ -1755,7 +1778,7 @@ final class Shrikant_VT_Admin {
             return;
         }
 
-        $rest     = rest_url( 'sk-vt/v1/' );
+        $rest     = rest_url( 'shrikant-vt/v1/' );
         $sections = [
             'counting'    => __( 'How a visit is counted', 'shrikant-visitor-tracker' ),
             'words'       => __( 'Views, visitors and share', 'shrikant-visitor-tracker' ),
@@ -1848,10 +1871,10 @@ final class Shrikant_VT_Admin {
                                 <tr>
                                     <th scope="row"><?php esc_html_e( 'Shortcode', 'shrikant-visitor-tracker' ); ?></th>
                                     <td>
-                                        <code>[sk_views]</code>
-                                        <code>[sk_views id="12"]</code>
-                                        <code>[sk_views label="Reads:"]</code>
-                                        <code>[sk_views raw="yes"]</code>
+                                        <code>[shrikant_views]</code>
+                                        <code>[shrikant_views id="12"]</code>
+                                        <code>[shrikant_views label="Reads:"]</code>
+                                        <code>[shrikant_views raw="yes"]</code>
                                     </td>
                                 </tr>
                                 <tr>
@@ -1932,11 +1955,11 @@ final class Shrikant_VT_Admin {
                                 <tr>
                                     <th scope="row">WP-CLI</th>
                                     <td>
-                                        <code>wp sk-vt stats today</code>
-                                        <code>wp sk-vt top-pages</code>
-                                        <code>wp sk-vt import --dry-run</code>
-                                        <code>wp sk-vt export</code>
-                                        <code>wp sk-vt cleanup --dry-run</code>
+                                        <code>wp shrikant-vt stats today</code>
+                                        <code>wp shrikant-vt top-pages</code>
+                                        <code>wp shrikant-vt import --dry-run</code>
+                                        <code>wp shrikant-vt export</code>
+                                        <code>wp shrikant-vt cleanup --dry-run</code>
                                     </td>
                                 </tr>
                                 <tr>

@@ -12,21 +12,21 @@ defined( 'ABSPATH' ) || exit;
 /**
  * Class Shrikant_VT_CLI
  *
- * Provides WP-CLI commands under the `wp sk-vt` namespace.
+ * Provides WP-CLI commands under the `wp shrikant-vt` namespace.
  *
  * Usage examples:
  * ───────────────
- *   wp sk-vt stats today
- *   wp sk-vt stats week
- *   wp sk-vt stats month
- *   wp sk-vt stats year
- *   wp sk-vt stats range --from=2025-01-01 --to=2025-03-31
- *   wp sk-vt top-pages --limit=20 --days=30 --format=table
- *   wp sk-vt online
- *   wp sk-vt cleanup --dry-run
- *   wp sk-vt aggregate
- *   wp sk-vt reset --yes
- *   wp sk-vt export --from=2025-01-01 --to=2025-12-31 --format=csv
+ *   wp shrikant-vt stats today
+ *   wp shrikant-vt stats week
+ *   wp shrikant-vt stats month
+ *   wp shrikant-vt stats year
+ *   wp shrikant-vt stats range --from=2025-01-01 --to=2025-03-31
+ *   wp shrikant-vt top-pages --limit=20 --days=30 --format=table
+ *   wp shrikant-vt online
+ *   wp shrikant-vt cleanup --dry-run
+ *   wp shrikant-vt aggregate
+ *   wp shrikant-vt reset --yes
+ *   wp shrikant-vt export --from=2025-01-01 --to=2025-12-31 --format=csv
  *
  * Registration:
  * ─────────────
@@ -49,7 +49,7 @@ final class Shrikant_VT_CLI {
         if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
             return;
         }
-        WP_CLI::add_command( 'sk-vt', $this );
+        WP_CLI::add_command( 'shrikant-vt', $this );
     }
 
     /**
@@ -81,8 +81,8 @@ final class Shrikant_VT_CLI {
      *
      * ## EXAMPLES
      *
-     *     wp sk-vt import --dry-run
-     *     wp sk-vt import post-views-counter
+     *     wp shrikant-vt import --dry-run
+     *     wp shrikant-vt import post-views-counter
      *
      * @subcommand import
      */
@@ -151,9 +151,9 @@ final class Shrikant_VT_CLI {
      *
      * ## EXAMPLES
      *
-     *     wp sk-vt stats today
-     *     wp sk-vt stats month --format=json
-     *     wp sk-vt stats range --from=2025-01-01 --to=2025-06-30
+     *     wp shrikant-vt stats today
+     *     wp shrikant-vt stats month --format=json
+     *     wp shrikant-vt stats range --from=2025-01-01 --to=2025-06-30
      *
      * @subcommand stats
      */
@@ -221,7 +221,7 @@ final class Shrikant_VT_CLI {
      *
      * ## EXAMPLES
      *
-     *     wp sk-vt top-pages --limit=20 --days=7
+     *     wp shrikant-vt top-pages --limit=20 --days=7
      *
      * @subcommand top-pages
      */
@@ -252,7 +252,7 @@ final class Shrikant_VT_CLI {
      *
      * ## EXAMPLES
      *
-     *     wp sk-vt online
+     *     wp shrikant-vt online
      *
      * @subcommand online
      */
@@ -275,8 +275,8 @@ final class Shrikant_VT_CLI {
      *
      * ## EXAMPLES
      *
-     *     wp sk-vt cleanup
-     *     wp sk-vt cleanup --dry-run
+     *     wp shrikant-vt cleanup
+     *     wp shrikant-vt cleanup --dry-run
      *
      * @subcommand cleanup
      */
@@ -313,7 +313,7 @@ final class Shrikant_VT_CLI {
      *
      * ## EXAMPLES
      *
-     *     wp sk-vt aggregate
+     *     wp shrikant-vt aggregate
      *
      * @subcommand aggregate
      */
@@ -337,13 +337,14 @@ final class Shrikant_VT_CLI {
      * [--format=<format>]
      * : Output format: csv or json. Default: csv.
      *
-     * [--file=<path>]
-     * : Write output to this file path. Default: stdout.
+     * [--file=<name>]
+     * : Write to this file name inside uploads/shrikant-visitor-tracker/.
+     * : Only the file name is used; any directory part is discarded. Default: stdout.
      *
      * ## EXAMPLES
      *
-     *     wp sk-vt export --from=2025-01-01 --to=2025-12-31 --file=visits.csv
-     *     wp sk-vt export --format=json > visits.json
+     *     wp shrikant-vt export --from=2025-01-01 --to=2025-12-31 --file=visits.csv
+     *     wp shrikant-vt export --format=json > visits.json
      *
      * @subcommand export
      */
@@ -383,9 +384,13 @@ final class Shrikant_VT_CLI {
         };
 
         if ( $file ) {
-            // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents
-            file_put_contents( $file, $output );
-            WP_CLI::success( sprintf( 'Exported %d rows to %s', count( $rows ), $file ) );
+            $written = $this->write_export( (string) $file, $output );
+
+            if ( '' === $written ) {
+                WP_CLI::error( 'Could not write the export. Check that the uploads directory is writable.' );
+            }
+
+            WP_CLI::success( sprintf( 'Exported %d rows to %s', count( $rows ), $written ) );
         } else {
             echo $output; // phpcs:ignore WordPress.Security.EscapeOutput
         }
@@ -402,7 +407,7 @@ final class Shrikant_VT_CLI {
      *
      * ## EXAMPLES
      *
-     *     wp sk-vt reset --yes
+     *     wp shrikant-vt reset --yes
      *
      * @subcommand reset
      */
@@ -420,7 +425,7 @@ final class Shrikant_VT_CLI {
         $wpdb->query( 'TRUNCATE TABLE ' . Shrikant_VT_DB::sum_table() );
         // phpcs:enable WordPress.DB.PreparedSQL, WordPress.DB.PreparedSQLPlaceholders, WordPress.DB.DirectDatabaseQuery, PluginCheck.Security.DirectDB
         // phpcs:enable
-        delete_option( 'sk_vt_last_agg_id' );
+        delete_option( 'shrikant_vt_last_agg_id' );
 
         WP_CLI::success( 'All analytics data has been deleted.' );
     }
@@ -433,6 +438,72 @@ final class Shrikant_VT_CLI {
      * @param array<int,array<string,string>> $rows
      * @return string CSV content.
      */
+    /**
+     * Write an export into the uploads directory, and nowhere else.
+     *
+     * Only the file name given is used; any directory part is thrown away, so
+     * a path cannot walk out of the folder this creates. Plugins must not
+     * write into core, plugin or theme directories -- those are replaced on
+     * upgrade and are often read-only -- and the uploads directory is the one
+     * place a site is expected to be able to write.
+     *
+     * @param string $name   File name asked for.
+     * @param string $output File contents.
+     * @return string Absolute path written, or '' on failure.
+     */
+    private function write_export( string $name, string $output ): string {
+        $name = sanitize_file_name( basename( $name ) );
+
+        if ( '' === $name ) {
+            $name = 'shrikant-vt-export.csv';
+        }
+
+        $uploads = wp_upload_dir();
+
+        if ( ! empty( $uploads['error'] ) ) {
+            return '';
+        }
+
+        $dir = trailingslashit( $uploads['basedir'] ) . 'shrikant-visitor-tracker';
+
+        if ( ! wp_mkdir_p( $dir ) ) {
+            return '';
+        }
+
+        // Exports hold visitor data, so the folder is kept out of the browser.
+        $index = trailingslashit( $dir ) . 'index.php';
+        if ( ! file_exists( $index ) ) {
+            $this->put( $index, "<?php\n// Silence is golden.\n" );
+        }
+
+        $path = trailingslashit( $dir ) . $name;
+
+        return $this->put( $path, $output ) ? $path : '';
+    }
+
+    /**
+     * Write a file through WP_Filesystem, falling back to a direct write.
+     *
+     * @param string $path     Absolute path.
+     * @param string $contents File contents.
+     */
+    private function put( string $path, string $contents ): bool {
+        global $wp_filesystem;
+
+        if ( ! function_exists( 'WP_Filesystem' ) ) {
+            require_once ABSPATH . 'wp-admin/includes/file.php';
+        }
+
+        WP_Filesystem();
+
+        if ( $wp_filesystem instanceof WP_Filesystem_Base ) {
+            return (bool) $wp_filesystem->put_contents( $path, $contents, FS_CHMOD_FILE );
+        }
+
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_read_file_put_contents -- WP_Filesystem could not be initialised; this is the documented fallback.
+        return false !== file_put_contents( $path, $contents );
+    }
+
     private function to_csv( array $rows ): string {
         if ( empty( $rows ) ) {
             return '';

@@ -31,14 +31,14 @@
  * 9.  Shrikant_VT_Stats               — Stats query helpers (used by admin & REST)
  * 10. Shrikant_VT_Tracker             — Core tracking logic (hot path, ultra-fast)
  * 11. Shrikant_VT_Cron                — WP-Cron jobs: SQL-side aggregation + cleanup
- * 12. Shrikant_VT_REST                — REST API under /wp-json/sk-vt/v1/
- * 13. Shrikant_VT_CLI                 — WP-CLI command group (wp sk-vt ...)
+ * 12. Shrikant_VT_REST                — REST API under /wp-json/shrikant-vt/v1/
+ * 13. Shrikant_VT_CLI                 — WP-CLI command group (wp shrikant-vt ...)
  * 14. Shrikant_VT_Admin               — Admin dashboard, Pages, UTM, Settings pages
  *
  * DATA FLOW (per request):
  *   template_redirect → Shrikant_VT_Bot_Filter::is_bot() → Shrikant_VT_Privacy::should_track()
- *   → Shrikant_VT_Tracker::maybe_track() → async AJAX write → sk_visitor_analytics table
- *   → WP-Cron aggregates into sk_visitor_summary (hourly)
+ *   → Shrikant_VT_Tracker::maybe_track() → async AJAX write → shrikant_visitor_analytics table
+ *   → WP-Cron aggregates into shrikant_visitor_summary (hourly)
  *
  * ============================================================================
  */
@@ -55,9 +55,9 @@ define( 'Shrikant_VT_DIR',         plugin_dir_path( __FILE__ ) );
 define( 'Shrikant_VT_URL',         plugin_dir_url( __FILE__ ) );
 define( 'Shrikant_VT_MIN_PHP',     '8.2' );
 define( 'Shrikant_VT_MIN_WP',      '6.3' );
-define( 'Shrikant_VT_TABLE_RAW',   'sk_visitor_analytics' );
-define( 'Shrikant_VT_TABLE_SUM',   'sk_visitor_summary' );
-define( 'Shrikant_VT_COOKIE_NAME', 'sk_unique_id' );
+define( 'Shrikant_VT_TABLE_RAW',   'shrikant_visitor_analytics' );
+define( 'Shrikant_VT_TABLE_SUM',   'shrikant_visitor_summary' );
+define( 'Shrikant_VT_COOKIE_NAME', 'shrikant_vt_uid' );
 define( 'Shrikant_VT_COOKIE_TTL',  60 * 60 * 24 * 730 ); // 2 years in seconds.
 define( 'Shrikant_VT_ONLINE_TTL',  300 );                  // 5 min default online window.
 

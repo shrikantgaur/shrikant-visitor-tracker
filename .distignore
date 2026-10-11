@@ -20,3 +20,8 @@ composer.lock
 package.json
 package-lock.json
 /tools
+
+# The directory's banner, icon and screenshots. The deploy action uploads
+# these to the assets/ folder in SVN itself; they have no business inside
+# the plugin ZIP, where they would be downloaded by every user forever.
+/.wordpress-org

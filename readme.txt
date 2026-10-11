@@ -117,6 +117,19 @@ Yes. Each sub-site gets its own prefixed database tables and settings.
 Yes. Run `wp shrikant-vt stats today`, `wp shrikant-vt top-pages --limit=20`, `wp shrikant-vt export --from=2025-01-01 --file=visits.csv`, and more.
 
 
+== Screenshots ==
+
+1. The dashboard: totals for today, the week and the month, the trend over a
+   year, and the split by device, browser, operating system and source.
+2. Pages report — which pages were read, by how many people, sortable and
+   searchable, with a share of the total.
+3. UTM campaigns, so a link you posted somewhere can be told apart from
+   search traffic.
+4. Settings. Nothing is collected until you say so: country lookup is off
+   until switched on, and the view count can be shown on any post type.
+5. Import from WP-PostViews or Post Views Counter, with a count of what will
+   be brought across before anything is written.
+
 == Changelog ==
 
 = 1.0.0 =

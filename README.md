@@ -1,5 +1,7 @@
 # Shrikant Visitor Tracker
 
+![Shrikant Visitor Tracker](.wordpress-org/banner-1544x500.png)
+
 Self-hosted visitor analytics for WordPress that still counts correctly behind a
 page cache, and that can take over from an existing view counter without losing
 its history.
@@ -29,6 +31,33 @@ untrustworthy.
 
 For the same reason, deleting this plugin does not delete its data unless that
 is switched on in Settings.
+
+## What it looks like
+
+The dashboard: totals for today, the week and the month, a year of trend,
+and the split by device, browser, operating system and source.
+
+![Dashboard](.wordpress-org/screenshot-1.png)
+
+Which pages were read, by how many people — sortable, searchable, each with
+its share of the total.
+
+![Pages report](.wordpress-org/screenshot-2.png)
+
+UTM campaigns, so a link posted somewhere can be told apart from search
+traffic.
+
+![UTM campaigns](.wordpress-org/screenshot-3.png)
+
+Settings. Nothing is collected until you say so: the country lookup is off
+until it is switched on, and the view count can be shown on any post type.
+
+![Settings](.wordpress-org/screenshot-4.png)
+
+Importing from WP-PostViews or Post Views Counter, which counts what will be
+brought across before it writes anything.
+
+![Import](.wordpress-org/screenshot-5.png)
 
 ## Requirements
 

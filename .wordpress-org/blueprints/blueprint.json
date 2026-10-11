@@ -1,0 +1,16 @@
+{
+	"$schema": "https://playground.wordpress.net/blueprint-schema.json",
+	"landingPage": "/wp-admin/admin.php?page=shrikant-visitor-tracker",
+	"preferredVersions": {
+		"php": "8.2",
+		"wp": "latest"
+	},
+	"phpExtensionBundles": [ "kitchen-sink" ],
+	"login": true,
+	"steps": [
+		{
+			"step": "runPHP",
+			"code": "<?php require_once '/wordpress/wp-load.php'; /* A preview of an analytics plugin with no analytics in it shows nothing at all, so six weeks of plausible traffic is written straight into the plugin's own tables and then aggregated by the plugin's own code. Wrapped, because a preview that loads with an empty dashboard is still a preview, while one that dies on a fatal is not. */ try { global $wpdb; $raw = $wpdb->prefix . 'shrikant_visitor_analytics'; if ( $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', $raw ) ) !== $raw ) { return; } $pages = []; foreach ( [ 'Getting started', 'Pricing', 'Docs: installation', 'Blog: what changed in 2.0', 'Contact' ] as $i => $title ) { $pages[] = wp_insert_post( [ 'post_title' => $title, 'post_type' => 'post', 'post_status' => 'publish', 'post_content' => 'Sample content for the preview.' ] ); } $devices = [ 'desktop', 'desktop', 'desktop', 'mobile', 'mobile', 'tablet' ]; $browsers = [ 'Chrome', 'Chrome', 'Chrome', 'Safari', 'Firefox', 'Edge' ]; $systems = [ 'Windows', 'macOS', 'Android', 'iOS', 'Linux' ]; $sources = [ 'direct', 'search', 'search', 'social', 'referral' ]; $countries = [ 'IN', 'IN', 'US', 'GB', 'DE', 'AU' ]; $rows = []; for ( $back = 41; $back >= 0; $back-- ) { $date = gmdate( 'Y-m-d', strtotime( \"-{$back} days\" ) ); $weekday = (int) gmdate( 'N', strtotime( $date ) ); $visits = ( $weekday >= 6 ) ? wp_rand( 8, 22 ) : wp_rand( 18, 52 ); for ( $v = 0; $v < $visits; $v++ ) { $hour = wp_rand( 6, 23 ); $i = wp_rand( 0, 5 ); $src = $sources[ wp_rand( 0, 4 ) ]; $rows[] = $wpdb->prepare( '(%s,%s,%d,%s,%d,%s,%s,%s,%s,%s,%s,%s,%s,%s,%d,%s)', 'v' . wp_rand( 1, 420 ), 's' . wp_rand( 1, 900 ), $pages[ wp_rand( 0, 4 ) ], $date, $hour, $date . ' ' . sprintf( '%02d', $hour ) . ':' . sprintf( '%02d', wp_rand( 0, 59 ) ) . ':00', $countries[ wp_rand( 0, 5 ) ], $devices[ $i ], $browsers[ $i ], $systems[ wp_rand( 0, 4 ) ], $src, 'search' === $src ? 'https://www.google.com/' : '', 'search' === $src ? 'google' : ( 'social' === $src ? 'twitter' : '' ), 'search' === $src ? 'organic' : ( 'social' === $src ? 'social' : '' ), wp_rand( 0, 1 ), '/sample-page/' ); } } foreach ( array_chunk( $rows, 200 ) as $chunk ) { $wpdb->query( 'INSERT INTO ' . $raw . ' (visitor_id,session_id,page_id,visit_date,visit_hour,visit_time,country_code,device_type,browser,os,referrer_type,referrer_url,utm_source,utm_medium,is_unique,page_url) VALUES ' . implode( ',', $chunk ) ); } $plugin = Shrikant_Visitor_Tracker::get_instance(); $cron = $plugin->get( 'cron' ); if ( $cron && method_exists( $cron, 'rebuild_summaries' ) ) { $cron->rebuild_summaries(); } } catch ( Throwable $e ) { /* The dashboard still loads; it simply has nothing in it. */ }"
+		}
+	]
+}

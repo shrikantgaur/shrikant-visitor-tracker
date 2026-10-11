@@ -4,7 +4,9 @@ Self-hosted visitor analytics for WordPress that still counts correctly behind a
 page cache, and that can take over from an existing view counter without losing
 its history.
 
-**WordPress.org:** https://wordpress.org/plugins/shrikant-visitor-tracker/ *(pending review)*
+**WordPress.org:** https://wordpress.org/plugins/shrikant-visitor-tracker/
+
+**Try it without installing:** [open it in a throwaway WordPress](https://playground.wordpress.net/?plugin=shrikant-visitor-tracker&url=/wp-admin/admin.php%3Fpage%3Dshrikant-visitor-tracker)
 
 ## Why it exists
 
@@ -41,3 +43,41 @@ excluded from the plugin ZIP by `.distignore`.
 ## License
 
 GPL-2.0-or-later. Chart.js 4.4.1 is bundled under the MIT license.
+
+## Releasing
+
+Releases go out by hand. The SVN password stays out of GitHub, so git and
+the plugin directory remain separate systems: git holds the history, SVN
+holds the releases.
+
+**Three places carry the version, and all three must agree** — the plugin
+header, `Stable tag:` in `readme.txt`, and the name of the tag directory.
+If they disagree the directory serves one version while the page describes
+another, and nothing warns you.
+
+```sh
+# 1. Bump the version in both files
+#    shrikant-visitor-tracker.php   * Version: 1.1.0
+#    readme.txt                     Stable tag: 1.1.0
+
+# 2. Copy the plugin into the SVN working copy, minus anything .distignore lists
+cd ~/Sites/projects/shrikant-visitor-tracker
+rsync -a --delete --exclude-from=<(sed 's|^/||' .distignore) --exclude='.svn' \
+      ./ ~/Sites/projects/svn-shrikant-visitor-tracker/trunk/
+
+# 3. A new tag directory, copied from trunk
+cd ~/Sites/projects/svn-shrikant-visitor-tracker
+rsync -a --exclude='.svn' trunk/ tags/1.1.0/
+svn add --force --parents trunk tags
+
+# 4. Send it
+svn ci -m "Release 1.1.0" --username shrikantgaur
+```
+
+The readme is read from whichever directory `Stable tag` names, **not from
+trunk**. A readme corrected only in trunk changes nothing anybody sees, so
+a text fix has to be copied into the current tag as well.
+
+Artwork for the directory page lives in `.wordpress-org/` and is copied to
+`assets/` in SVN. It is excluded from the plugin ZIP: a banner has no
+business being downloaded by every user of the plugin, forever.

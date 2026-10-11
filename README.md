@@ -1,5 +1,11 @@
 # Shrikant Visitor Tracker
 
+[![Version](https://img.shields.io/wordpress/plugin/v/shrikant-visitor-tracker?label=version)](https://wordpress.org/plugins/shrikant-visitor-tracker/)
+[![Downloads](https://img.shields.io/wordpress/plugin/dt/shrikant-visitor-tracker?label=downloads)](https://wordpress.org/plugins/shrikant-visitor-tracker/advanced/)
+[![WordPress](https://img.shields.io/wordpress/plugin/wp-version/shrikant-visitor-tracker?label=wordpress)](https://wordpress.org/plugins/shrikant-visitor-tracker/)
+[![PHP](https://img.shields.io/wordpress/plugin/required-php/shrikant-visitor-tracker?label=php)](https://wordpress.org/plugins/shrikant-visitor-tracker/)
+[![License](https://img.shields.io/badge/license-GPL--2.0--or--later-blue)](LICENSE.txt)
+
 ![Shrikant Visitor Tracker](.wordpress-org/banner-1544x500.png)
 
 Self-hosted visitor analytics for WordPress that still counts correctly behind a

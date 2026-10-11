@@ -12,6 +12,8 @@ Visitor analytics that counts correctly behind a page cache, and imports your ol
 
 == Description ==
 
+**[Try it now, without installing anything](https://playground.wordpress.net/?plugin=shrikant-visitor-tracker&url=/wp-admin/admin.php%3Fpage%3Dshrikant-visitor-tracker)** — opens a throwaway WordPress in your browser with the plugin already running. Nothing is installed on your own site.
+
 Most analytics plugins assume you are starting from nothing. This one assumes you are not.
 
 = Switching counters without losing the history =
